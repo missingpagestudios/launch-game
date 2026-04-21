@@ -1,15 +1,15 @@
 [gd_resource type="Theme" load_steps=2 format=3]
 
-[ext_resource type="FontFile" path="res://assets/fonts/m6x11plus.ttf" id="1_font"]
+[ext_resource type="FontFile" path="res://assets/fonts/Inter-Regular.ttf" id="1_font"]
 
 [resource]
 default_font = ExtResource("1_font")
-default_font_size = 22
+default_font_size = 14
 Label/fonts/font = ExtResource("1_font")
-Label/font_sizes/font_size = 22
+Label/font_sizes/font_size = 14
 Button/fonts/font = ExtResource("1_font")
-Button/font_sizes/font_size = 20
+Button/font_sizes/font_size = 14
 CheckBox/fonts/font = ExtResource("1_font")
-CheckBox/font_sizes/font_size = 20
+CheckBox/font_sizes/font_size = 14
 LineEdit/fonts/font = ExtResource("1_font")
-LineEdit/font_sizes/font_size = 22
+LineEdit/font_sizes/font_size = 14

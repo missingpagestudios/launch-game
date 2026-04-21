@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LAUNCH — Planning Screen (Clean Modern UI)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=VT323&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    background: #0a0a0a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    color: #E8E8E8;
+  }
+
+  .header-info {
+    max-width: 1280px;
+    margin: 0 auto 20px;
+    padding: 16px;
+    background: #1a1a1a;
+    border-radius: 4px;
+  }
+
+  .header-info h1 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #FFB84D;
+    font-weight: 600;
+  }
+
+  .header-info p {
+    font-size: 14px;
+    color: #999;
+    line-height: 1.5;
+  }
+
+  /* ========== MAIN CANVAS ========== */
+  .canvas {
+    width: 1280px;
+    height: 720px;
+    margin: 0 auto;
+    position: relative;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    border: 1px solid #333;
+    border-radius: 2px;
+  }
+
+  /* ========== LAYER 1: ATMOSPHERIC BACKGROUND ========== */
+  /* Keep the pixel art atmospheric background - it's the game's identity */
+
+  .bg-sky {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, 
+      #0A1028 0%, 
+      #0A1028 55%, 
+      #121838 70%,
+      #1A1525 85%,
+      #050815 100%);
+    image-rendering: pixelated;
+  }
+
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #F5E6D0;
+  }
+
+  .star-1 { top: 20px; left: 200px; }
+  .star-2 { top: 35px; left: 450px; }
+  .star-3 { top: 15px; left: 720px; }
+  .star-4 { top: 45px; left: 950px; }
+  .star-5 { top: 30px; left: 1100px; }
+  .star-6 { top: 50px; left: 1180px; }
+  .star-7 { top: 65px; left: 320px; }
+  .star-8 { top: 25px; left: 600px; }
+  .star-9 { top: 40px; left: 880px; }
+
+  .bg-hills {
+    position: absolute;
+    bottom: 180px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #050815;
+    clip-path: polygon(
+      0 60%, 5% 50%, 12% 65%, 20% 45%, 28% 55%, 35% 40%, 45% 55%,
+      55% 45%, 65% 60%, 75% 50%, 85% 65%, 92% 55%, 100% 60%,
+      100% 100%, 0 100%
+    );
+    opacity: 0.5;
+  }
+
+  .bg-house {
+    position: absolute;
+    bottom: 80px;
+    right: 100px;
+    width: 320px;
+    height: 200px;
+    background: #050815;
+    clip-path: polygon(
+      0 30%, 50% 0, 100% 30%,
+      100% 100%, 0 100%
+    );
+  }
+
+  .bg-chimney {
+    position: absolute;
+    bottom: 220px;
+    right: 220px;
+    width: 32px;
+    height: 70px;
+    background: #050815;
+  }
+
+  .bg-window {
+    position: absolute;
+    bottom: 130px;
+    right: 200px;
+    width: 40px;
+    height: 40px;
+    background: #3A2818;
+    box-shadow: 
+      inset 0 0 0 2px #050815;
+  }
+
+  .bg-window::before,
+  .bg-window::after {
+    content: '';
+    position: absolute;
+    background: #050815;
+  }
+
+  .bg-window::before {
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  .bg-window::after {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+
+  .bg-tree {
+    position: absolute;
+    bottom: 80px;
+    left: 30px;
+    width: 280px;
+    height: 320px;
+  }
+
+  .bg-tree-canopy {
+    position: absolute;
+    top: 0;
+    left: 30px;
+    width: 220px;
+    height: 240px;
+    background: #050815;
+    border-radius: 50% 50% 45% 50% / 60% 60% 40% 40%;
+  }
+
+  .bg-tree-trunk {
+    position: absolute;
+    bottom: 0;
+    left: 120px;
+    width: 30px;
+    height: 100px;
+    background: #050815;
+  }
+
+  .bg-fence {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #050815;
+    clip-path: polygon(
+      0 100%, 100% 100%, 100% 60%,
+      96% 60%, 96% 35%, 94% 35%, 94% 60%,
+      90% 60%, 90% 35%, 88% 35%, 88% 60%,
+      84% 60%, 84% 35%, 82% 35%, 82% 60%,
+      78% 60%, 78% 35%, 76% 35%, 76% 60%,
+      72% 60%, 72% 35%, 70% 35%, 70% 60%,
+      66% 60%, 66% 35%, 64% 35%, 64% 60%,
+      60% 60%, 60% 35%, 58% 35%, 58% 60%,
+      54% 60%, 54% 35%, 52% 35%, 52% 60%,
+      48% 60%, 48% 35%, 46% 35%, 46% 60%,
+      42% 60%, 42% 35%, 40% 35%, 40% 60%,
+      36% 60%, 36% 35%, 34% 35%, 34% 60%,
+      30% 60%, 30% 35%, 28% 35%, 28% 60%,
+      24% 60%, 24% 35%, 22% 35%, 22% 60%,
+      18% 60%, 18% 35%, 16% 35%, 16% 60%,
+      12% 60%, 12% 35%, 10% 35%, 10% 60%,
+      6% 60%, 6% 35%, 4% 35%, 4% 60%,
+      0 60%
+    );
+    opacity: 0.9;
+  }
+
+  .bg-firepit-base {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    width: 50px;
+    height: 30px;
+    background: #050815;
+    transform: translateX(-50%);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .bg-firepit-glow {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    background: #FFB84D;
+    box-shadow: 
+      0 0 12px #FF6B4D, 
+      0 0 24px #3A2818,
+      0 0 36px rgba(255, 184, 77, 0.3);
+    opacity: 0.85;
+    border-radius: 50%;
+  }
+
+  /* ========== LAYER 2: MODERN UI ========== */
+
+  /* Top bar - clean and minimal */
+  .top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: rgba(15, 20, 35, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+
+  .top-bar .left-section {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .top-bar .logo {
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    color: #FFB84D;
+    letter-spacing: 1px;
+  }
+
+  .top-bar .night-info {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .top-bar .night-label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+  }
+
+  .top-bar .night-value {
+    font-size: 16px;
+    color: #E8E8E8;
+    font-weight: 600;
+  }
+
+  .top-bar .zone-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: rgba(255, 184, 77, 0.1);
+    border: 1px solid rgba(255, 184, 77, 0.3);
+    border-radius: 4px;
+  }
+
+  .top-bar .zone-label {
+    font-size: 11px;
+    color: #FFB84D;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+  }
+
+  .top-bar .zone-value {
+    font-size: 14px;
+    color: #F5E6D0;
+    font-weight: 500;
+  }
+
+  .top-bar .right-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+  }
+
+  .cash-display {
+    font-size: 18px;
+    color: #FFB84D;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fans-display {
+    font-size: 14px;
+    color: #B8B8B8;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fans-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .progress-bar {
+    width: 60px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #FFB84D;
+    width: 40%;
+    border-radius: 2px;
+  }
+
+  /* Main content area */
+  .content-area {
+    position: absolute;
+    top: 72px;
+    left: 16px;
+    right: 16px;
+    height: 560px;
+    display: flex;
+    gap: 16px;
+    z-index: 5;
+  }
+
+  /* Panels - clean modern with subtle background */
+  .panel {
+    background: rgba(15, 20, 35, 0.70);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .panel-fireworks { width: 400px; }
+  .panel-marketing { width: 384px; }
+  .panel-upgrades { width: 400px; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+
+  .panel-subtitle {
+    font-size: 13px;
+    color: #B8B8B8;
+    margin-bottom: 16px;
+    font-weight: 400;
+  }
+
+  /* ========== FIREWORK ROWS ========== */
+  
+  .row-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-right: 4px;
+  }
+
+  .firework-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    gap: 12px;
+    position: relative;
+  }
+
+  .firework-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .firework-row.selected {
+    background: rgba(255, 184, 77, 0.08);
+    border-color: rgba(255, 184, 77, 0.4);
+  }
+
+  .firework-row.locked {
+    opacity: 0.4;
+  }
+
+  .tier-indicator {
+    width: 3px;
+    height: 28px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .tier-indicator.t1 { background: #A07050; }
+  .tier-indicator.t2 { background: #B0B8C0; }
+  .tier-indicator.t3 { background: #D4AF37; }
+  .tier-indicator.t4 { background: #5FC8D8; }
+
+  .row-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .row-name {
+    font-size: 14px;
+    color: #F0F0F0;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+
+  .row-meta {
+    font-size: 12px;
+    color: #888;
+    font-weight: 400;
+  }
+
+  .row-meta .cost {
+    color: #FFB84D;
+    font-weight: 500;
+  }
+
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .qty-btn {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #B8B8B8;
+    font-size: 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .qty-btn:hover {
+    background: rgba(255, 184, 77, 0.15);
+    border-color: rgba(255, 184, 77, 0.4);
+    color: #FFB84D;
+  }
+
+  .qty-value {
+    width: 32px;
+    text-align: center;
+    font-size: 14px;
+    color: #F0F0F0;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .qty-value.active {
+    color: #FFB84D;
+  }
+
+  .info-btn {
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #666;
+    font-size: 11px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  .info-btn:hover {
+    background: rgba(255, 184, 77, 0.1);
+    border-color: #FFB84D;
+    color: #FFB84D;
+  }
+
+  /* Panel totals */
+  .panel-totals {
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+  }
+
+  .panel-totals .value {
+    color: #F0F0F0;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .panel-totals .value.highlight {
+    color: #FFB84D;
+  }
+
+  /* ========== MARKETING / ENHANCEMENTS ========== */
+  
+  .section-divider {
+    margin: 16px 0 12px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .section-divider:first-of-type {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .section-label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+
+  .section-hint {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+  }
+
+  .subsection-label {
+    font-size: 12px;
+    color: #999;
+    font-weight: 500;
+    margin: 12px 0 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .subsection-label:first-child {
+    margin-top: 0;
+  }
+
+  /* ========== UPGRADES ========== */
+  
+  .upgrade-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 16px;
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+  }
+
+  .upgrade-tab {
+    flex: 1;
+    padding: 6px 4px;
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .upgrade-tab:hover:not(.active) {
+    color: #E0E0E0;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .upgrade-tab.active {
+    background: rgba(255, 184, 77, 0.15);
+    color: #FFB84D;
+  }
+
+  .upgrade-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 10px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .upgrade-row.owned {
+    background: rgba(255, 184, 77, 0.05);
+    border-color: rgba(255, 184, 77, 0.2);
+  }
+
+  .upgrade-row.locked {
+    opacity: 0.4;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .upgrade-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .upgrade-row.owned .upgrade-icon {
+    background: rgba(255, 184, 77, 0.2);
+    color: #FFB84D;
+  }
+
+  .upgrade-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .upgrade-name {
+    font-size: 13px;
+    color: #F0F0F0;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .upgrade-desc {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .upgrade-cost {
+    font-size: 13px;
+    color: #FFB84D;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .upgrade-tag {
+    font-size: 11px;
+    color: #666;
+    flex-shrink: 0;
+  }
+
+  .buy-btn {
+    padding: 6px 14px;
+    background: rgba(255, 184, 77, 0.15);
+    border: 1px solid rgba(255, 184, 77, 0.4);
+    color: #FFB84D;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .buy-btn:hover {
+    background: #FFB84D;
+    color: #0A1028;
+    border-color: #FFB84D;
+  }
+
+  .buy-btn:disabled {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: #555;
+    cursor: not-allowed;
+  }
+
+  .next-unlock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 184, 77, 0.05);
+    border: 1px solid rgba(255, 184, 77, 0.15);
+    border-left: 3px solid #FFB84D;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #E0E0E0;
+  }
+
+  /* Enhancement pills */
+  .enh-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 12px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .enh-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .enh-row.selected {
+    background: rgba(255, 184, 77, 0.08);
+    border-color: rgba(255, 184, 77, 0.4);
+  }
+
+  .enh-check {
+    width: 16px;
+    height: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+  }
+
+  .enh-row.selected .enh-check {
+    background: #FFB84D;
+    border-color: #FFB84D;
+    color: #0A1028;
+    font-weight: 700;
+  }
+
+  .enh-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .enh-name {
+    font-size: 13px;
+    color: #F0F0F0;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .enh-effect {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .enh-cost {
+    font-size: 13px;
+    color: #FFB84D;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ========== BOTTOM BAR ========== */
+  
+  .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: rgba(15, 20, 35, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .bottom-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-hint {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+  }
+
+  .summary-main {
+    font-size: 14px;
+    color: #E0E0E0;
+    font-weight: 500;
+  }
+
+  .summary-main .spend {
+    color: #FFB84D;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-main .cash {
+    color: #F0F0F0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bottom-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    background: #FFB84D;
+    color: #0A1028;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary:hover {
+    background: #FFC864;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 184, 77, 0.3);
+  }
+
+  .btn-primary .arrow {
+    font-size: 14px;
+  }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #888;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #E0E0E0;
+  }
+
+  /* Scrollbar */
+  .row-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .row-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .row-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .row-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* ========== ANNOTATIONS ========== */
+  
+  .annotations {
+    max-width: 1280px;
+    margin: 20px auto 0;
+    padding: 20px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #999;
+    line-height: 1.6;
+  }
+
+  .annotations h3 {
+    color: #FFB84D;
+    font-size: 18px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .annotations h4 {
+    color: #E8E8E8;
+    font-size: 15px;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .annotations ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .annotations li {
+    margin-bottom: 6px;
+    padding-left: 18px;
+    position: relative;
+  }
+
+  .annotations li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #FFB84D;
+  }
+
+  .annotations .highlight {
+    color: #E8E8E8;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-info">
+  <h1>LAUNCH — Planning Screen (Clean Modern UI)</h1>
+  <p>1280 × 720 · Inter font body · VT323 pixel flair for logo/flavor · Atmospheric pixel art background preserved · Modern UI chrome</p>
+</div>
+
+<div class="canvas">
+
+  <!-- LAYER 1: Atmospheric Background (kept as pixel art) -->
+  <div class="bg-sky">
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
+    <div class="star star-5"></div>
+    <div class="star star-6"></div>
+    <div class="star star-7"></div>
+    <div class="star star-8"></div>
+    <div class="star star-9"></div>
+    <div class="bg-hills"></div>
+    <div class="bg-tree">
+      <div class="bg-tree-canopy"></div>
+      <div class="bg-tree-trunk"></div>
+    </div>
+    <div class="bg-house"></div>
+    <div class="bg-chimney"></div>
+    <div class="bg-window"></div>
+    <div class="bg-fence"></div>
+    <div class="bg-firepit-base"></div>
+    <div class="bg-firepit-glow"></div>
+  </div>
+
+  <!-- LAYER 2: Modern UI -->
+  
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="left-section">
+      <div class="logo">LAUNCH</div>
+      <div class="night-info">
+        <span class="night-label">Night</span>
+        <span class="night-value">47 / 100</span>
+      </div>
+      <div class="zone-indicator">
+        <span class="zone-label">Zone 3</span>
+        <span class="zone-value">Town</span>
+      </div>
+    </div>
+    <div class="right-section">
+      <div class="stat-item">
+        <div class="fans-progress">
+          <span class="fans-display">437 / 500 fans</span>
+          <div class="progress-bar"><div class="progress-fill"></div></div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="cash-display">$1,247,500</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-area">
+
+    <!-- Column 1: Fireworks -->
+    <div class="panel panel-fireworks">
+      <div class="panel-header">
+        <div class="panel-title">Fireworks</div>
+      </div>
+      <div class="panel-subtitle">Budget: $487,500</div>
+
+      <div class="row-list">
+
+        <div class="firework-row selected">
+          <div class="tier-indicator t1"></div>
+          <div class="row-content">
+            <div class="row-name">Sparkler</div>
+            <div class="row-meta"><span class="cost">$2</span> · 1 eng · classic</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value active">30</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+        <div class="firework-row selected">
+          <div class="tier-indicator t1"></div>
+          <div class="row-content">
+            <div class="row-name">Firecracker</div>
+            <div class="row-meta"><span class="cost">$3</span> · 2 eng · loud</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value active">50</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+        <div class="firework-row">
+          <div class="tier-indicator t1"></div>
+          <div class="row-content">
+            <div class="row-name">Snake</div>
+            <div class="row-meta"><span class="cost">$4</span> · 1 eng · ground</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value">0</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+        <div class="firework-row">
+          <div class="tier-indicator t1"></div>
+          <div class="row-content">
+            <div class="row-name">Smoke Bomb</div>
+            <div class="row-meta"><span class="cost">$4</span> · 2 eng · smoke</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value">0</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+        <div class="firework-row">
+          <div class="tier-indicator t1"></div>
+          <div class="row-content">
+            <div class="row-name">Bottle Rocket</div>
+            <div class="row-meta"><span class="cost">$5</span> · 2 eng · rising</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value">0</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+        <div class="firework-row">
+          <div class="tier-indicator t2"></div>
+          <div class="row-content">
+            <div class="row-name">Roman Candle</div>
+            <div class="row-meta"><span class="cost">$12</span> · 4 eng · rising, sequential</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value">0</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+        <div class="firework-row">
+          <div class="tier-indicator t2"></div>
+          <div class="row-content">
+            <div class="row-name">Small Mortar</div>
+            <div class="row-meta"><span class="cost">$15</span> · 5 eng · burst</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value">0</div>
+            <button class="qty-btn">+</button>
+          </div>
+          <button class="info-btn">i</button>
+        </div>
+
+      </div>
+
+      <div class="panel-totals">
+        <span>80 fireworks · 130 eng</span>
+        <span class="value highlight">$210</span>
+      </div>
+    </div>
+
+    <!-- Column 2: Marketing + Enhancements -->
+    <div class="panel panel-marketing">
+      <div class="panel-header">
+        <div class="panel-title">Marketing &amp; Enhancements</div>
+      </div>
+      <div class="panel-subtitle">Boost attendance and engagement</div>
+
+      <div class="row-list">
+
+        <div class="section-divider">
+          <div class="section-label">Marketing</div>
+          <div class="section-hint">quantity-based</div>
+        </div>
+
+        <div class="firework-row selected">
+          <div class="row-content">
+            <div class="row-name">Door-to-Door Flyers</div>
+            <div class="row-meta"><span class="cost">$5</span> · +10 attendees · cap 20</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value active">3</div>
+            <button class="qty-btn">+</button>
+          </div>
+        </div>
+
+        <div class="firework-row">
+          <div class="row-content">
+            <div class="row-name">Local Radio Ad</div>
+            <div class="row-meta"><span class="cost">$50</span> · +80 attendees</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn">−</button>
+            <div class="qty-value">0</div>
+            <button class="qty-btn">+</button>
+          </div>
+        </div>
+
+        <div class="section-divider">
+          <div class="section-label">Enhancements</div>
+          <div class="section-hint">one per category</div>
+        </div>
+
+        <div class="subsection-label">Snacks</div>
+        
+        <div class="enh-row selected">
+          <div class="enh-check">✓</div>
+          <div class="enh-content">
+            <div class="enh-name">None</div>
+          </div>
+          <div class="enh-cost">$0</div>
+        </div>
+
+        <div class="enh-row">
+          <div class="enh-check"></div>
+          <div class="enh-content">
+            <div class="enh-name">Candy from Store</div>
+            <div class="enh-effect">+5% tips</div>
+          </div>
+          <div class="enh-cost">$20</div>
+        </div>
+
+        <div class="subsection-label">Sound</div>
+
+        <div class="enh-row selected">
+          <div class="enh-check">✓</div>
+          <div class="enh-content">
+            <div class="enh-name">None</div>
+          </div>
+          <div class="enh-cost">$0</div>
+        </div>
+
+        <div class="enh-row">
+          <div class="enh-check"></div>
+          <div class="enh-content">
+            <div class="enh-name">Boombox</div>
+            <div class="enh-effect">+5% engagement</div>
+          </div>
+          <div class="enh-cost">$50</div>
+        </div>
+
+      </div>
+
+      <div class="panel-totals">
+        <span>+30 att · 0 enh</span>
+        <span class="value highlight">$15</span>
+      </div>
+    </div>
+
+    <!-- Column 3: Upgrades -->
+    <div class="panel panel-upgrades">
+      <div class="panel-header">
+        <div class="panel-title">Upgrades</div>
+      </div>
+      <div class="panel-subtitle">Permanent improvements</div>
+
+      <div class="upgrade-tabs">
+        <div class="upgrade-tab active">All</div>
+        <div class="upgrade-tab">Crew</div>
+        <div class="upgrade-tab">Infra</div>
+        <div class="upgrade-tab">Rev</div>
+        <div class="upgrade-tab">Mkt</div>
+      </div>
+
+      <div class="row-list">
+
+        <div class="section-divider" style="padding-top: 0; border-top: none; margin-top: 0;">
+          <div class="section-label">Owned · 1</div>
+        </div>
+
+        <div class="upgrade-row owned">
+          <div class="upgrade-icon">✓</div>
+          <div class="upgrade-content">
+            <div class="upgrade-name">Flyer Printer</div>
+            <div class="upgrade-desc">+2 attendees perm</div>
+          </div>
+          <div class="upgrade-tag">Mkt</div>
+        </div>
+
+        <div class="section-divider">
+          <div class="section-label">Available · 3</div>
+        </div>
+
+        <div class="upgrade-row">
+          <div class="upgrade-icon">👥</div>
+          <div class="upgrade-content">
+            <div class="upgrade-name">Local Assistant</div>
+            <div class="upgrade-desc">+10% engagement on all shows</div>
+          </div>
+          <div class="upgrade-cost">$1,500</div>
+          <button class="buy-btn">BUY</button>
+        </div>
+
+        <div class="upgrade-row">
+          <div class="upgrade-icon">📢</div>
+          <div class="upgrade-content">
+            <div class="upgrade-name">Website</div>
+            <div class="upgrade-desc">+50 attendees permanent</div>
+          </div>
+          <div class="upgrade-cost">$8,000</div>
+          <button class="buy-btn">BUY</button>
+        </div>
+
+        <div class="upgrade-row" style="opacity: 0.5;">
+          <div class="upgrade-icon">👥</div>
+          <div class="upgrade-content">
+            <div class="upgrade-name">Production Team</div>
+            <div class="upgrade-desc">+5% engagement all shows</div>
+          </div>
+          <div class="upgrade-cost">$50,000</div>
+          <button class="buy-btn" disabled>BUY</button>
+        </div>
+
+        <div class="section-divider">
+          <div class="section-label">Locked · 2</div>
+        </div>
+
+        <div class="next-unlock">
+          <span style="color: #FFB84D; font-weight: 600;">→</span>
+          <span>Next: <strong style="color: #E8E8E8;">Website</strong> at Zone 2</span>
+        </div>
+
+        <div class="upgrade-row locked">
+          <div class="upgrade-icon">🔒</div>
+          <div class="upgrade-content">
+            <div class="upgrade-name">Pyrotechnic Crew</div>
+          </div>
+          <div class="upgrade-tag">Zone 3+</div>
+        </div>
+
+        <div class="upgrade-row locked">
+          <div class="upgrade-icon">🔒</div>
+          <div class="upgrade-content">
+            <div class="upgrade-name">Drone Coordination</div>
+          </div>
+          <div class="upgrade-tag">Zone 5+</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar">
+    <div class="bottom-summary">
+      <div class="summary-hint">Ready to Run Show</div>
+      <div class="summary-main">
+        Spend <span class="spend">$275</span> · Cash after <span class="cash">$1,247,225</span>
+      </div>
+    </div>
+    <div class="bottom-actions">
+      <button class="btn-icon">☰</button>
+      <button class="btn-primary">Run Show <span class="arrow">→</span></button>
+    </div>
+  </div>
+
+</div>
+
+<div class="annotations">
+  <h3>What's different in the modern UI approach</h3>
+
+  <h4>Typography</h4>
+  <ul>
+    <li><span class="highlight">Inter font</span> for all body/UI text — renders cleanly at any size (13/14/16/18px used here)</li>
+    <li><span class="highlight">VT323 pixel font</span> kept ONLY for the "LAUNCH" logo in top-left — small intentional pixel flavor without fighting readability</li>
+    <li><span class="highlight">Clear hierarchy</span>: 11px uppercase section labels, 13-14px body, 16-18px emphasis</li>
+    <li>Font-variant-numeric: tabular-nums for all numbers — consistent alignment</li>
+  </ul>
+
+  <h4>Color system</h4>
+  <ul>
+    <li><span class="highlight">#FFB84D amber</span> replaces pure gold — warmer, more "ember" feeling</li>
+    <li>Every color has ONE job: amber = money/accents, white-grays = text, reds not needed yet</li>
+    <li>Atmospheric pixel art background kept intact — the game's personality shines through</li>
+    <li>UI uses rgba transparency + backdrop blur — feels layered and modern</li>
+  </ul>
+
+  <h4>Visual treatment</h4>
+  <ul>
+    <li><span class="highlight">Subtle backdrop blur</span> on panels and bars — adds premium feel, keeps atmospheric background visible</li>
+    <li><span class="highlight">Thin tier indicator stripes</span> (3px vertical bars) still communicate firework tiers at a glance</li>
+    <li><span class="highlight">Rounded corners</span> (4-6px) on interactive elements — modern convention, subtle</li>
+    <li><span class="highlight">Clean borders</span> (1px rgba white 6-8% alpha) — present but subtle</li>
+    <li><span class="highlight">Gentle hover states</span> — subtle background brightens, border emphasizes</li>
+  </ul>
+
+  <h4>What's preserved from the pixel art direction</h4>
+  <ul>
+    <li>Atmospheric pixel art background (sky, tree, house, fence, fire pit) — unchanged</li>
+    <li>Tier color system (bronze/silver/gold/cyan) — applied as clean stripe indicators</li>
+    <li>VT323 pixel font as identity marker in the logo</li>
+    <li>All gameplay elements remain pixel art (fireworks, show rendering, character silhouettes for Stage 3)</li>
+  </ul>
+
+  <h4>What's better about this approach</h4>
+  <ul>
+    <li><span class="highlight">Readability solved</span> — Inter works at any size, no more fighting font constraints</li>
+    <li><span class="highlight">Density improved</span> — can fit more info per row because text is smaller without being unreadable</li>
+    <li><span class="highlight">Feels premium</span> — backdrop blur + proper typography hierarchy + subtle animations</li>
+    <li><span class="highlight">Future-proof</span> — standard UI patterns will age well, pixel UI risks looking dated</li>
+    <li><span class="highlight">Less work</span> — no need to generate/design custom pixel UI chrome for every element</li>
+  </ul>
+
+  <h4>The split: gameplay = pixel art, UI = modern</h4>
+  <ul>
+    <li>Fireworks firing (Stage 3) stays pure pixel art particle effects</li>
+    <li>Zone backgrounds stay pixel art — beautiful and cheap to generate</li>
+    <li>Character silhouettes for donation screen stay pixel art</li>
+    <li>UI gets out of the way with clean modern chrome</li>
+    <li>This is the approach most successful indies take (Hades, Celeste, Slay the Spire, the Black Hole game you showed)</li>
+  </ul>
+</div>
+
+</body>
+</html>

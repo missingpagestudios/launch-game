@@ -6,3 +6,19 @@ export_presets.cfg
 *.translation
 *.psd
 .DS_Store
+
+# Inter font weights we don't ship — only Regular/Medium/SemiBold/Bold are tracked
+assets/fonts/Inter-Black*
+assets/fonts/Inter-ExtraBold*
+assets/fonts/Inter-ExtraLight*
+assets/fonts/Inter-Light*
+assets/fonts/Inter-Italic*
+assets/fonts/Inter-MediumItalic*
+assets/fonts/Inter-BoldItalic*
+assets/fonts/Inter-SemiBoldItalic*
+assets/fonts/Inter-Thin*
+assets/fonts/Inter-Variable*
+assets/fonts/Inter-Italic-Variable*
+assets/fonts/Inter.ttc*
+assets/fonts/InterDisplay-*
+assets/fonts/InterVariable*
