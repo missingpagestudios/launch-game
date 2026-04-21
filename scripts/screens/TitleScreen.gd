@@ -13,6 +13,7 @@ const FONT_ITALIC := preload("res://assets/fonts/Inter-Italic.ttf")
 
 # Spec hero image — fallback chain if it isn't in the repo yet.
 const BG_CANDIDATES: Array[String] = [
+	"res://assets/backgrounds/zone6.png",
 	"res://assets/backgrounds/zone_6_mountain_vista.png",
 	"res://assets/backgrounds/zone2.png",
 	"res://assets/backgrounds/zone1.png",
