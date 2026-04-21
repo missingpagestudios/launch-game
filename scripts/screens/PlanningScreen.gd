@@ -79,10 +79,14 @@ const ICON_LOCK := "res://assets/images/lock.png"
 const ICON_CHECK := "res://assets/images/check.png"
 const ICON_ARROW := "res://assets/images/rightarrow.png"
 const ICON_INFO := "res://assets/images/info.png"
+const ICON_MENU := "res://assets/images/hamburger.png"
+const ICON_PLUS := "res://assets/images/plus.png"
+const ICON_MINUS := "res://assets/images/minus.png"
+const ICON_CLOSE := "res://assets/images/c.png"
 const CATEGORY_ICONS := {
-	"marketing": "res://assets/images/speaker.png",
+	"marketing": "res://assets/images/marketing.png",
 	"infrastructure": "res://assets/images/house.png",
-	"crew": "res://assets/images/fans.png",
+	"crew": "res://assets/images/people2.png",
 	"revenue": "res://assets/images/money.png",
 }
 
@@ -395,7 +399,7 @@ func _build_firework_row(fw: Dictionary) -> Control:
 		"%d eng" % int(fw.get("engagement", 0)), SIZE_META, FONT_REGULAR, TEXT_MUTED)
 	h.add_child(eng_lbl)
 
-	var minus := _qty_button("−")
+	var minus := _qty_button("-")
 	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
 	qty_lbl.custom_minimum_size = Vector2(28, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -486,7 +490,7 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 		"+%s att" % _fmt_num(int(mk.get("attendees", 0))),
 		SIZE_META, FONT_REGULAR, TEXT_MUTED))
 
-	var minus := _qty_button("−")
+	var minus := _qty_button("-")
 	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
 	qty_lbl.custom_minimum_size = Vector2(32, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -678,7 +682,7 @@ func _rebuild_upgrades() -> void:
 
 func _build_owned_upgrade_row(up: Dictionary) -> Control:
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 40)
+	wrap.custom_minimum_size = Vector2(0, 44)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wrap.add_theme_stylebox_override("panel", _rounded_style(
 		Color(1.0, 0.722, 0.302, 0.05), Color(1.0, 0.722, 0.302, 0.2), 4))
@@ -694,8 +698,8 @@ func _build_owned_upgrade_row(up: Dictionary) -> Control:
 	h.add_theme_constant_override("separation", 10)
 	pad.add_child(h)
 
-	# Category icons are waiting on modern-icon replacements; use the
-	# short category label on the right instead.
+	h.add_child(_category_tile(String(up.get("category", "")), true))
+
 	var name_lbl := _inter_label(String(up.name), SIZE_BODY_SM, FONT_MEDIUM, TEXT_PRIMARY)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lbl.clip_text = true
@@ -705,9 +709,7 @@ func _build_owned_upgrade_row(up: Dictionary) -> Control:
 	h.add_child(_inter_label(
 		_effect_summary(up.get("effect", {})),
 		SIZE_LABEL, FONT_REGULAR, TEXT_MUTED))
-	h.add_child(_inter_label(
-		_category_short(String(up.get("category", ""))),
-		SIZE_LABEL, FONT_SEMIBOLD, ACCENT_AMBER))
+	h.add_child(_icon_tinted(ICON_CHECK, 14, ACCENT_AMBER))
 	return wrap
 
 
@@ -715,7 +717,7 @@ func _build_available_upgrade_row(up: Dictionary) -> Control:
 	var cost: int = int(up.get("cost", 0))
 	var affordable: bool = float(cost) <= GameState.money
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 44)
+	wrap.custom_minimum_size = Vector2(0, 48)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wrap.add_theme_stylebox_override("panel", _rounded_style(CARD_BG, BORDER_SUBTLE, 4))
 
@@ -727,11 +729,11 @@ func _build_available_upgrade_row(up: Dictionary) -> Control:
 	wrap.add_child(pad)
 
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 8)
+	h.add_theme_constant_override("separation", 10)
 	pad.add_child(h)
 
-	# No pixel icon tile — short category tag replaces it until modern
-	# icons arrive.
+	h.add_child(_category_tile(String(up.get("category", "")), false))
+
 	var name_lbl := _inter_label(
 		String(up.name), SIZE_BODY_SM, FONT_MEDIUM,
 		TEXT_PRIMARY if affordable else TEXT_MUTED)
@@ -739,10 +741,6 @@ func _build_available_upgrade_row(up: Dictionary) -> Control:
 	name_lbl.clip_text = true
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	h.add_child(name_lbl)
-
-	h.add_child(_inter_label(
-		_category_short(String(up.get("category", ""))),
-		SIZE_LABEL, FONT_REGULAR, TEXT_MUTED))
 
 	h.add_child(_inter_label(
 		"$%s" % _fmt_num(cost),
@@ -831,11 +829,18 @@ func _category_tile(cat: String, amber: bool) -> Control:
 	wrap.custom_minimum_size = Vector2(28, 28)
 	wrap.add_theme_stylebox_override("panel", _rounded_style(bg, Color(0, 0, 0, 0), 4))
 	if CATEGORY_ICONS.has(cat):
-		var icon := _icon(CATEGORY_ICONS[cat], 16)
-		if amber:
-			icon.modulate = ACCENT_AMBER
-		wrap.add_child(icon)
+		var center := CenterContainer.new()
+		wrap.add_child(center)
+		var icon := _icon(CATEGORY_ICONS[cat], 18)
+		icon.modulate = ACCENT_AMBER if amber else TEXT_SECONDARY
+		center.add_child(icon)
 	return wrap
+
+
+func _icon_tinted(path: String, px: int, tint: Color) -> TextureRect:
+	var t := _icon(path, px)
+	t.modulate = tint
+	return t
 
 
 func _category_short(cat: String) -> String:
@@ -1106,14 +1111,14 @@ func _icon(path: String, px: int) -> TextureRect:
 	return t
 
 
-func _qty_button(text: String) -> Button:
+func _qty_button(kind: String) -> Button:
 	var b := Button.new()
-	b.text = text
-	b.add_theme_font_override("font", FONT_MEDIUM)
-	b.add_theme_font_size_override("font_size", SIZE_BODY)
-	b.add_theme_color_override("font_color", TEXT_SECONDARY)
-	b.add_theme_color_override("font_hover_color", ACCENT_AMBER)
-	b.add_theme_color_override("font_disabled_color", TEXT_DIM)
+	b.icon = load(ICON_MINUS if kind == "-" else ICON_PLUS)
+	b.expand_icon = true
+	b.add_theme_color_override("icon_normal_color", TEXT_SECONDARY)
+	b.add_theme_color_override("icon_hover_color", ACCENT_AMBER)
+	b.add_theme_color_override("icon_pressed_color", ACCENT_AMBER)
+	b.add_theme_color_override("icon_disabled_color", TEXT_DIM)
 	b.add_theme_stylebox_override("normal", _rounded_style(
 		Color(1.0, 1.0, 1.0, 0.06), Color(1.0, 1.0, 1.0, 0.1), 3))
 	b.add_theme_stylebox_override("hover", _rounded_style(
@@ -1188,10 +1193,10 @@ func _run_show_primary() -> Button:
 
 func _menu_button() -> Button:
 	var b := Button.new()
-	b.text = "☰"
-	b.add_theme_font_size_override("font_size", SIZE_H2)
-	b.add_theme_color_override("font_color", TEXT_MUTED)
-	b.add_theme_color_override("font_hover_color", TEXT_PRIMARY)
+	b.icon = load(ICON_MENU)
+	b.expand_icon = true
+	b.add_theme_color_override("icon_normal_color", TEXT_MUTED)
+	b.add_theme_color_override("icon_hover_color", TEXT_PRIMARY)
 	b.add_theme_stylebox_override("normal", _rounded_style(
 		Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.15), 4))
 	b.add_theme_stylebox_override("hover", _rounded_style(
