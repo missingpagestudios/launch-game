@@ -15,7 +15,7 @@ const FONT_LOGO := preload("res://assets/fonts/VT323-Regular.ttf")
 # --- palette -----------------------------------------------------------------
 
 const NIGHT_DEEP := Color("0F1423")
-const PANEL_BG := Color(0.059, 0.078, 0.137, 0.70)           # #0F1423 @ 0.70
+const PANEL_BG := Color(0.059, 0.078, 0.137, 0.55)           # #0F1423 @ 0.55
 const TOP_BAR_BG := Color(0.059, 0.078, 0.137, 0.85)         # #0F1423 @ 0.85
 const BOTTOM_BAR_BG := Color(0.059, 0.078, 0.137, 0.85)
 
@@ -247,7 +247,9 @@ func _fans_block() -> Control:
 	_fans_label = _inter_label(text, SIZE_BODY, FONT_MEDIUM, TEXT_SECONDARY)
 	h.add_child(_fans_label)
 
-	# 60x4 progress bar
+	# 60×4 progress bar, vertically centered in the top bar.
+	var track_center := CenterContainer.new()
+	track_center.custom_minimum_size = Vector2(60, 0)
 	var track := Control.new()
 	track.custom_minimum_size = Vector2(60, 4)
 	var track_bg := ColorRect.new()
@@ -261,7 +263,8 @@ func _fans_block() -> Control:
 	var pct: float = 0.0 if threshold <= 0 else clampf(float(GameState.repeat_fans) / float(threshold), 0.0, 1.0)
 	_fans_fill.size = Vector2(60.0 * pct, 4.0)
 	track.add_child(_fans_fill)
-	h.add_child(track)
+	track_center.add_child(track)
+	h.add_child(track_center)
 	return h
 
 
@@ -348,69 +351,66 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	var cost: int = int(fw.get("cost", 0))
 
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 52)
+	wrap.custom_minimum_size = Vector2(0, 44)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var style := _rounded_style(CARD_BG, BORDER_SUBTLE, 4)
+	style.content_margin_left = 0
 	wrap.add_theme_stylebox_override("panel", style)
 
+	var outer := HBoxContainer.new()
+	outer.add_theme_constant_override("separation", 0)
+	wrap.add_child(outer)
+
+	# Full-height tier stripe, 4px wide.
+	var stripe := ColorRect.new()
+	stripe.color = TIER_STRIPE.get(tier, TIER_STRIPE[1])
+	stripe.custom_minimum_size = Vector2(4, 0)
+	outer.add_child(stripe)
+
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 14)
-	pad.add_theme_constant_override("margin_right", 14)
-	pad.add_theme_constant_override("margin_top", 12)
-	pad.add_theme_constant_override("margin_bottom", 12)
-	wrap.add_child(pad)
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	outer.add_child(pad)
 
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
+	h.add_theme_constant_override("separation", 10)
 	pad.add_child(h)
 
-	# Tier stripe: 3px wide, 28px tall, centered.
-	var stripe_wrap := CenterContainer.new()
-	stripe_wrap.custom_minimum_size = Vector2(3, 28)
-	var stripe := PanelContainer.new()
-	stripe.custom_minimum_size = Vector2(3, 28)
-	stripe.add_theme_stylebox_override("panel", _rounded_style(
-		TIER_STRIPE.get(tier, TIER_STRIPE[1]), Color(0, 0, 0, 0), 2))
-	stripe_wrap.add_child(stripe)
-	h.add_child(stripe_wrap)
-
-	# Name + meta stacked.
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 3)
+	# One-line: name (flex) then meta ("$cost · N eng") right-aligned, then
+	# stepper, then info button.
 	var name_lbl := _inter_label(String(fw.name), SIZE_BODY, FONT_MEDIUM, TEXT_PRIMARY)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lbl.clip_text = true
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	col.add_child(name_lbl)
+	h.add_child(name_lbl)
 
-	var meta_text: String = "$%s · %d eng" % [_fmt_num(cost), int(fw.get("engagement", 0))]
-	var meta_lbl := _inter_label(meta_text, SIZE_META, FONT_REGULAR, TEXT_MUTED)
-	meta_lbl.clip_text = true
-	meta_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	# Highlight dollar sign via full string coloring kept simple:
-	# re-render the cost portion in amber using a RichTextLabel only if needed.
-	# Keeping plain muted for now — amber accent is reserved for qty > 0.
-	col.add_child(meta_lbl)
-	h.add_child(col)
+	var cost_lbl := _inter_label("$%s" % _fmt_num(cost), SIZE_META, FONT_MEDIUM, ACCENT_AMBER)
+	h.add_child(cost_lbl)
+	var dot := _inter_label("·", SIZE_META, FONT_REGULAR, TEXT_DIM)
+	h.add_child(dot)
+	var eng_lbl := _inter_label(
+		"%d eng" % int(fw.get("engagement", 0)), SIZE_META, FONT_REGULAR, TEXT_MUTED)
+	h.add_child(eng_lbl)
 
-	# Stepper: [-] qty [+]
 	var minus := _qty_button("−")
 	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
-	qty_lbl.custom_minimum_size = Vector2(32, 0)
+	qty_lbl.custom_minimum_size = Vector2(28, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _qty_button("+")
 	h.add_child(minus)
 	h.add_child(qty_lbl)
 	h.add_child(plus)
 
-	# Info button: 24x24 circle-ish
 	var info_btn := _info_button()
 	info_btn.pressed.connect(func() -> void: _show_firework_info(fw))
 	h.add_child(info_btn)
 
 	var entry := {
 		"fw": fw, "wrap": wrap, "style": style,
-		"qty_label": qty_lbl, "meta_label": meta_lbl,
+		"qty_label": qty_lbl,
 	}
 	minus.pressed.connect(func() -> void: _nudge_firework(fw, -1, entry))
 	plus.pressed.connect(func() -> void: _nudge_firework(fw, 1, entry))
@@ -444,9 +444,9 @@ func _build_marketing_and_enhancements() -> Control:
 
 	var groups: Dictionary = GameEngine.available_enhancements()
 	for category in groups.keys():
-		v.add_child(_strip(4))
+		v.add_child(_strip(2))
 		v.add_child(_inter_label(
-			String(category).capitalize(), SIZE_META, FONT_MEDIUM, TEXT_SECONDARY))
+			String(category).capitalize(), SIZE_LABEL, FONT_REGULAR, TEXT_SECONDARY))
 		v.add_child(_build_enhancement_row(String(category), "None", {}, true))
 		for eh in groups[category]:
 			v.add_child(_build_enhancement_row(
@@ -457,7 +457,7 @@ func _build_marketing_and_enhancements() -> Control:
 func _build_marketing_row(mk: Dictionary) -> Control:
 	var cost: int = int(mk.get("cost", 0))
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 52)
+	wrap.custom_minimum_size = Vector2(0, 44)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var style := _rounded_style(CARD_BG, BORDER_SUBTLE, 4)
 	wrap.add_theme_stylebox_override("panel", style)
@@ -465,25 +465,26 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 14)
 	pad.add_theme_constant_override("margin_right", 14)
-	pad.add_theme_constant_override("margin_top", 12)
-	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
 	wrap.add_child(pad)
 
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
+	h.add_theme_constant_override("separation", 8)
 	pad.add_child(h)
 
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 3)
-	col.add_child(_inter_label(String(mk.name), SIZE_BODY, FONT_MEDIUM, TEXT_PRIMARY))
-	var meta_text := "$%s · +%s att · cap %d" % [
-		_fmt_num(cost),
-		_fmt_num(int(mk.get("attendees", 0))),
-		int(mk.get("cap", 0)),
-	]
-	col.add_child(_inter_label(meta_text, SIZE_META, FONT_REGULAR, TEXT_MUTED))
-	h.add_child(col)
+	# One line: name (flex) · amber cost · muted effect · stepper
+	var name_lbl := _inter_label(String(mk.name), SIZE_BODY, FONT_MEDIUM, TEXT_PRIMARY)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.clip_text = true
+	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	h.add_child(name_lbl)
+
+	h.add_child(_inter_label("$%s" % _fmt_num(cost), SIZE_META, FONT_MEDIUM, ACCENT_AMBER))
+	h.add_child(_inter_label("·", SIZE_META, FONT_REGULAR, TEXT_DIM))
+	h.add_child(_inter_label(
+		"+%s att" % _fmt_num(int(mk.get("attendees", 0))),
+		SIZE_META, FONT_REGULAR, TEXT_MUTED))
 
 	var minus := _qty_button("−")
 	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
@@ -503,7 +504,7 @@ func _build_enhancement_row(category: String, name: String, eh: Dictionary, is_n
 	var selected: bool = (is_none and not _enhancements.has(category)) \
 		or (not is_none and String(_enhancements.get(category, "")) == name)
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 40)
+	wrap.custom_minimum_size = Vector2(0, 32)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var bg: Color = CARD_BG_SELECTED if selected else CARD_BG
 	var border: Color = BORDER_AMBER if selected else BORDER_SUBTLE
@@ -512,8 +513,8 @@ func _build_enhancement_row(category: String, name: String, eh: Dictionary, is_n
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 12)
 	pad.add_theme_constant_override("margin_right", 12)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
+	pad.add_theme_constant_override("margin_top", 6)
+	pad.add_theme_constant_override("margin_bottom", 6)
 	wrap.add_child(pad)
 
 	var h := HBoxContainer.new()
@@ -522,20 +523,23 @@ func _build_enhancement_row(category: String, name: String, eh: Dictionary, is_n
 
 	h.add_child(_checkbox_tile(selected))
 
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 2)
-	col.add_child(_inter_label(name, SIZE_BODY_SM, FONT_MEDIUM, TEXT_PRIMARY))
+	# Single-line layout so the row hits 32px cleanly.
+	var name_lbl := _inter_label(name, SIZE_BODY_SM, FONT_MEDIUM, TEXT_PRIMARY)
+	h.add_child(name_lbl)
+
 	var effect_text: String = ""
 	if not is_none:
 		if eh.has("eng_mult"):
-			effect_text += "+%d%% engagement" % int(float(eh.eng_mult) * 100)
+			effect_text += "+%d%% eng" % int(float(eh.eng_mult) * 100)
 		if eh.has("tip_mult"):
 			if effect_text != "":
 				effect_text += " · "
 			effect_text += "+%d%% tips" % int(float(eh.tip_mult) * 100)
-	col.add_child(_inter_label(effect_text, SIZE_LABEL, FONT_REGULAR, TEXT_MUTED))
-	h.add_child(col)
+	var effect_lbl := _inter_label(effect_text, SIZE_LABEL, FONT_REGULAR, TEXT_MUTED)
+	effect_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	effect_lbl.clip_text = true
+	effect_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	h.add_child(effect_lbl)
 
 	if not is_none:
 		h.add_child(_inter_label(
@@ -674,7 +678,7 @@ func _rebuild_upgrades() -> void:
 
 func _build_owned_upgrade_row(up: Dictionary) -> Control:
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 52)
+	wrap.custom_minimum_size = Vector2(0, 40)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wrap.add_theme_stylebox_override("panel", _rounded_style(
 		Color(1.0, 0.722, 0.302, 0.05), Color(1.0, 0.722, 0.302, 0.2), 4))
@@ -682,28 +686,28 @@ func _build_owned_upgrade_row(up: Dictionary) -> Control:
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 14)
 	pad.add_theme_constant_override("margin_right", 14)
-	pad.add_theme_constant_override("margin_top", 12)
-	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
 	wrap.add_child(pad)
 
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
+	h.add_theme_constant_override("separation", 10)
 	pad.add_child(h)
 
-	h.add_child(_category_tile(String(up.get("category", "")), true))
-
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 2)
-	col.add_child(_inter_label(String(up.name), SIZE_BODY_SM, FONT_MEDIUM, TEXT_PRIMARY))
-	col.add_child(_inter_label(
-		_effect_summary(up.get("effect", {})),
-		SIZE_LABEL, FONT_REGULAR, TEXT_MUTED))
-	h.add_child(col)
+	# Category icons are waiting on modern-icon replacements; use the
+	# short category label on the right instead.
+	var name_lbl := _inter_label(String(up.name), SIZE_BODY_SM, FONT_MEDIUM, TEXT_PRIMARY)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.clip_text = true
+	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	h.add_child(name_lbl)
 
 	h.add_child(_inter_label(
-		_category_short(String(up.get("category", ""))),
+		_effect_summary(up.get("effect", {})),
 		SIZE_LABEL, FONT_REGULAR, TEXT_MUTED))
+	h.add_child(_inter_label(
+		_category_short(String(up.get("category", ""))),
+		SIZE_LABEL, FONT_SEMIBOLD, ACCENT_AMBER))
 	return wrap
 
 
@@ -711,33 +715,34 @@ func _build_available_upgrade_row(up: Dictionary) -> Control:
 	var cost: int = int(up.get("cost", 0))
 	var affordable: bool = float(cost) <= GameState.money
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 52)
+	wrap.custom_minimum_size = Vector2(0, 44)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wrap.add_theme_stylebox_override("panel", _rounded_style(CARD_BG, BORDER_SUBTLE, 4))
 
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 14)
 	pad.add_theme_constant_override("margin_right", 14)
-	pad.add_theme_constant_override("margin_top", 12)
-	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
 	wrap.add_child(pad)
 
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
+	h.add_theme_constant_override("separation", 8)
 	pad.add_child(h)
 
-	h.add_child(_category_tile(String(up.get("category", "")), false))
-
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 2)
-	col.add_child(_inter_label(
+	# No pixel icon tile — short category tag replaces it until modern
+	# icons arrive.
+	var name_lbl := _inter_label(
 		String(up.name), SIZE_BODY_SM, FONT_MEDIUM,
-		TEXT_PRIMARY if affordable else TEXT_MUTED))
-	col.add_child(_inter_label(
-		_effect_summary(up.get("effect", {})),
+		TEXT_PRIMARY if affordable else TEXT_MUTED)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.clip_text = true
+	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	h.add_child(name_lbl)
+
+	h.add_child(_inter_label(
+		_category_short(String(up.get("category", ""))),
 		SIZE_LABEL, FONT_REGULAR, TEXT_MUTED))
-	h.add_child(col)
 
 	h.add_child(_inter_label(
 		"$%s" % _fmt_num(cost),
@@ -1166,7 +1171,9 @@ func _run_show_primary() -> Button:
 	b.add_theme_color_override("font_color", NIGHT_DEEP)
 	b.add_theme_color_override("font_hover_color", NIGHT_DEEP)
 	b.add_theme_color_override("font_pressed_color", NIGHT_DEEP)
-	b.add_theme_color_override("font_disabled_color", TEXT_DIM)
+	# Disabled state keeps the amber shape visible — it should still
+	# read as "this is the primary action" even when not clickable.
+	b.add_theme_color_override("font_disabled_color", Color(NIGHT_DEEP.r, NIGHT_DEEP.g, NIGHT_DEEP.b, 0.6))
 	b.add_theme_stylebox_override("normal", _button_style_padded(
 		ACCENT_AMBER, ACCENT_AMBER, 4, 12, 32))
 	b.add_theme_stylebox_override("hover", _button_style_padded(
@@ -1174,7 +1181,7 @@ func _run_show_primary() -> Button:
 	b.add_theme_stylebox_override("pressed", _button_style_padded(
 		ACCENT_AMBER, ACCENT_AMBER, 4, 12, 32))
 	b.add_theme_stylebox_override("disabled", _button_style_padded(
-		Color(1.0, 1.0, 1.0, 0.04), BORDER_SUBTLE, 4, 12, 32))
+		Color(1.0, 0.722, 0.302, 0.35), Color(1.0, 0.722, 0.302, 0.5), 4, 12, 32))
 	b.custom_minimum_size = Vector2(160, 40)
 	return b
 
