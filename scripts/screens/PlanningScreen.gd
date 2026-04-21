@@ -144,6 +144,25 @@ func _ready() -> void:
 	root.add_child(_build_bottom_bar())
 
 	_refresh_totals()
+	_fade_in()
+
+
+func _fade_in() -> void:
+	# Paired with TitleScreen._transition_out: cover everything with a
+	# black overlay, then tween it to transparent so the scene reveals.
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 128
+	add_child(overlay_layer)
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 1)
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay_layer.add_child(overlay)
+	var t := create_tween()
+	t.tween_property(overlay, "color:a", 0.0, 0.45)
+	t.tween_callback(func() -> void:
+		overlay_layer.queue_free())
 
 
 # --- backdrop ---------------------------------------------------------------

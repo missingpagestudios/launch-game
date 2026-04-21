@@ -434,14 +434,59 @@ func _on_menu_select(idx: int) -> void:
 	if not _entrance_done:
 		_skip_entrance()
 	match idx:
-		0: Router.start_new_run()
+		0: _transition_out(func() -> void: Router.start_new_run())
 		1:
 			if _continue_available():
-				Router.start_new_run()  # TODO: load save when stage 3 adds save/load.
+				_transition_out(func() -> void: Router.start_new_run())
 		2: _fireworks_demo_stub()  # TODO: Unlockables browser when designed.
 		3: pass  # TODO: Settings screen.
 		4: pass  # TODO: Credits screen.
 		5: get_tree().quit()
+
+
+func _transition_out(after: Callable) -> void:
+	# Disable further input and run the exit animation: title + subtitle
+	# + menu buttons fade/slide out, a black overlay fades in on top,
+	# then the callback fires to swap scenes. The next scene is
+	# responsible for its own fade-in from black.
+	set_process_input(false)
+	var menu_tween := create_tween()
+	menu_tween.set_ease(Tween.EASE_IN)
+	menu_tween.set_trans(Tween.TRANS_CUBIC)
+	for i in range(_menu_buttons.size()):
+		var b: Button = _menu_buttons[i]
+		var stagger: float = i * 0.04
+		var out_x: float = b.position.x + 60.0
+		var t_pos := create_tween()
+		t_pos.set_ease(Tween.EASE_IN)
+		t_pos.set_trans(Tween.TRANS_CUBIC)
+		t_pos.tween_interval(stagger)
+		t_pos.tween_property(b, "position:x", out_x, 0.25)
+		var t_alpha := create_tween()
+		t_alpha.tween_interval(stagger)
+		t_alpha.tween_property(b, "modulate:a", 0.0, 0.25)
+
+	var t_title := create_tween()
+	t_title.tween_property(_title_label, "modulate:a", 0.0, 0.35)
+	var t_sub := create_tween()
+	t_sub.tween_property(_subtitle_label, "modulate:a", 0.0, 0.35)
+
+	# Black overlay fades in over the whole screen — sits on a separate
+	# CanvasLayer so it covers background, foreground, everything.
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 128
+	add_child(overlay_layer)
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0)
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay_layer.add_child(overlay)
+
+	var t_fade := create_tween()
+	t_fade.tween_interval(0.35)   # let the menu/title start leaving first
+	t_fade.tween_property(overlay, "color:a", 1.0, 0.45)
+	t_fade.tween_callback(after)
 
 
 func _fireworks_demo_stub() -> void:
