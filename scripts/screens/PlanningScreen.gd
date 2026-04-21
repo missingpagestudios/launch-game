@@ -1230,24 +1230,27 @@ func _qty_button(kind: String) -> Button:
 
 
 func _icon_button_style(fill: Color, border: Color) -> StyleBoxFlat:
-	# Compact pad so the icon fills the button: 2px margin on every side
-	# gives ~20×20 of icon inside a 24×24 button (~83%).
+	# Small pad on every side so the icon shrinks visibly inside the
+	# rounded box: 5px all round → ~14×14 icon in a 24×24 button.
 	var sb := _rounded_style(fill, border, 3)
-	sb.content_margin_left = 2
-	sb.content_margin_right = 2
-	sb.content_margin_top = 2
-	sb.content_margin_bottom = 2
+	sb.content_margin_left = 5
+	sb.content_margin_right = 5
+	sb.content_margin_top = 5
+	sb.content_margin_bottom = 5
 	return sb
 
 
 func _info_button() -> Button:
+	# Bumped into visibility: filled bg + secondary-grey icon so the
+	# button reads as clickable. Hover flips to amber.
 	var b := Button.new()
 	b.icon = load(ICON_INFO)
 	b.expand_icon = true
-	b.add_theme_color_override("icon_normal_color", TEXT_DIM)
+	b.add_theme_color_override("icon_normal_color", TEXT_SECONDARY)
 	b.add_theme_color_override("icon_hover_color", ACCENT_AMBER)
+	b.add_theme_color_override("icon_pressed_color", ACCENT_AMBER)
 	b.add_theme_stylebox_override("normal", _icon_button_style(
-		Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.1)))
+		Color(1.0, 1.0, 1.0, 0.06), Color(1.0, 1.0, 1.0, 0.18)))
 	b.add_theme_stylebox_override("hover", _icon_button_style(
 		ACCENT_AMBER_DIM, BORDER_AMBER))
 	b.add_theme_stylebox_override("pressed", _icon_button_style(
