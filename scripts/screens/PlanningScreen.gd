@@ -11,6 +11,8 @@ const AMBIENT_INTERVAL_MAX := 7.0
 # Keep bursts away from the panel column edges so they don't feel stuck
 # behind text.
 const AMBIENT_EDGE_INSET := 150
+# Launch altitude = top edge of the bottom bar (which is 88px tall).
+const AMBIENT_LAUNCH_FROM_BOTTOM := 88
 
 # --- fonts -------------------------------------------------------------------
 
@@ -219,7 +221,7 @@ func _fire_ambient_burst() -> void:
 	var fw: Dictionary = _ambient_catalog[randi() % _ambient_catalog.size()]
 	var x_min: float = float(AMBIENT_EDGE_INSET)
 	var x_max: float = maxf(x_min, viewport.x - float(AMBIENT_EDGE_INSET))
-	var ground := Vector2(randf_range(x_min, x_max), viewport.y - 120.0)
+	var ground := Vector2(randf_range(x_min, x_max), viewport.y - float(AMBIENT_LAUNCH_FROM_BOTTOM))
 	_ambient_field.call("launch", fw, ground)
 	_ambient_timer.wait_time = randf_range(AMBIENT_INTERVAL_MIN, AMBIENT_INTERVAL_MAX)
 	_ambient_timer.start()
