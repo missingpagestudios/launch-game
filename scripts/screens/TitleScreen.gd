@@ -9,7 +9,7 @@ const FONT_TITLE_VARIABLE := preload("res://assets/fonts/CormorantGaramond-Varia
 const FONT_REGULAR := preload("res://assets/fonts/Inter-Regular.ttf")
 const FONT_MEDIUM := preload("res://assets/fonts/Inter-Medium.ttf")
 const FONT_SEMIBOLD := preload("res://assets/fonts/Inter-SemiBold.ttf")
-const FONT_ITALIC := preload("res://assets/fonts/Inter-Italic.ttf")
+const FONT_BOLD := preload("res://assets/fonts/Inter-Bold.ttf")
 const FireworkFieldScript := preload("res://scripts/fireworks/firework_field.gd")
 
 # Ambient burst cadence + spatial gating (LEFT-side only).
@@ -18,7 +18,6 @@ const AMBIENT_INTERVAL_MAX := 10.0
 const AMBIENT_LEFT_X_MIN := 120.0
 const AMBIENT_LEFT_X_MAX := 560.0       # Keep bursts clear of the right column.
 const AMBIENT_GROUND_Y_OFFSET := 260.0  # Launch point ~260px above bottom edge.
-const AMBIENT_STAR_COUNT := 60
 
 # Spec hero image — fallback chain if it isn't in the repo yet.
 const BG_CANDIDATES: Array[String] = [
@@ -49,10 +48,6 @@ var _subtitle_label: Label
 var _tweens: Array[Tween] = []
 var _entrance_done: bool = false
 
-var _stars_node: Control
-var _star_positions: PackedVector2Array = PackedVector2Array()
-var _star_sizes: PackedFloat32Array = PackedFloat32Array()
-var _star_phases: PackedFloat32Array = PackedFloat32Array()
 var _ambient_field: Node2D
 var _ambient_timer: Timer
 var _ambient_catalog: Array = []
@@ -97,57 +92,9 @@ func _build_background() -> void:
 
 
 func _build_ambient() -> void:
-	_build_star_field()
+	# Star field removed per Rob's tweak — zone6.png carries its own
+	# star pattern and the extra overlay was fighting with it.
 	_build_firework_field()
-
-
-func _build_star_field() -> void:
-	# Deterministic star layout so repeated Title visits aren't jarring.
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 9173
-	_star_positions.clear()
-	_star_sizes.clear()
-	_star_phases.clear()
-	for i in range(AMBIENT_STAR_COUNT):
-		_star_positions.append(Vector2(
-			rng.randf_range(0.0, 1280.0),
-			rng.randf_range(0.0, 720.0 * 0.55)))
-		_star_sizes.append(rng.randf_range(0.8, 2.4))
-		_star_phases.append(rng.randf_range(0.0, TAU))
-
-	_stars_node = Control.new()
-	_stars_node.anchor_right = 1.0
-	_stars_node.anchor_bottom = 1.0
-	_stars_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_stars_node.set_script(GDScript.new())
-	# Attach a tiny inline renderer so we don't spawn 60 Control nodes.
-	_stars_node.set_meta("positions", _star_positions)
-	_stars_node.set_meta("sizes", _star_sizes)
-	_stars_node.set_meta("phases", _star_phases)
-	_stars_node.draw.connect(_draw_stars)
-	_stars_node.set_process(true)
-	add_child(_stars_node)
-	# Drive a redraw once per frame for the twinkle animation.
-	var t := Timer.new()
-	t.wait_time = 0.05
-	t.autostart = true
-	t.timeout.connect(func() -> void: if _stars_node != null: _stars_node.queue_redraw())
-	add_child(t)
-
-
-func _draw_stars() -> void:
-	if _stars_node == null:
-		return
-	var time: float = float(Time.get_ticks_msec()) / 1000.0
-	for i in range(_star_positions.size()):
-		var phase: float = _star_phases[i]
-		# Smooth 3-5s twinkle: opacity floats between 0.3 and 0.9.
-		var t: float = 0.5 + 0.3 * sin(time * 1.6 + phase)
-		var alpha: float = clampf(t, 0.3, 0.9)
-		var size: float = _star_sizes[i]
-		_stars_node.draw_rect(
-			Rect2(_star_positions[i], Vector2(size, size)),
-			Color(1.0, 1.0, 1.0, alpha))
 
 
 func _build_firework_field() -> void:
@@ -204,8 +151,6 @@ func _build_right_column() -> void:
 	_title_label = _build_title()
 	col.add_child(_title_label)
 
-	col.add_child(_spacer(6))
-
 	_subtitle_label = _build_subtitle()
 	col.add_child(_subtitle_label)
 
@@ -232,15 +177,13 @@ func _build_title() -> Label:
 	var l := Label.new()
 	l.text = "The Last Show"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	# Variable font weight — spec asks for SemiBold (wght 600).
+	# Variable font at wght 700 — proper bold weight on Cormorant.
 	var fv := FontVariation.new()
 	fv.base_font = FONT_TITLE_VARIABLE
-	fv.variation_opentype = {"wght": 600}
+	fv.variation_opentype = {"wght": 700}
 	l.add_theme_font_override("font", fv)
 	l.add_theme_font_size_override("font_size", 76)
 	l.add_theme_color_override("font_color", TEXT_PRIMARY)
-	# Soft amber glow via thick, translucent outline. Approximates the
-	# double drop-shadow from the HTML mockup.
 	l.add_theme_constant_override("outline_size", 36)
 	l.add_theme_color_override(
 		"font_outline_color", Color(1.0, 0.722, 0.302, 0.14))
@@ -251,7 +194,7 @@ func _build_subtitle() -> Label:
 	var l := Label.new()
 	l.text = "a game about fireworks"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	l.add_theme_font_override("font", FONT_ITALIC)
+	l.add_theme_font_override("font", FONT_BOLD)
 	l.add_theme_font_size_override("font_size", 14)
 	l.add_theme_color_override("font_color", TEXT_SECONDARY)
 	return l
@@ -261,6 +204,7 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	var b := Button.new()
 	b.text = text.to_upper()
 	b.flat = true
+	b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	b.custom_minimum_size = Vector2(280, 0)
 	b.focus_mode = Control.FOCUS_ALL
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
