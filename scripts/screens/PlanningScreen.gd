@@ -313,7 +313,7 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	var affordable: bool = float(cost) <= GameState.money
 
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 64)
+	wrap.custom_minimum_size = Vector2(0, 76)
 	var style := _row_style(ROW_BG if affordable else ROW_BG_UNAFFORD)
 	wrap.add_theme_stylebox_override("panel", style)
 
@@ -321,7 +321,6 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	outer.add_theme_constant_override("separation", 0)
 	wrap.add_child(outer)
 
-	# 4px tier color stripe
 	var stripe := ColorRect.new()
 	stripe.color = TIER_STRIPE.get(tier, TIER_STRIPE[1])
 	stripe.custom_minimum_size = Vector2(4, 0)
@@ -329,53 +328,53 @@ func _build_firework_row(fw: Dictionary) -> Control:
 
 	var pad := MarginContainer.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	pad.add_theme_constant_override("margin_left", 8)
-	pad.add_theme_constant_override("margin_right", 8)
-	pad.add_theme_constant_override("margin_top", 12)
-	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 10)
+	pad.add_theme_constant_override("margin_bottom", 10)
 	outer.add_child(pad)
 
 	var content := HBoxContainer.new()
-	content.add_theme_constant_override("separation", 8)
+	content.add_theme_constant_override("separation", 10)
 	pad.add_child(content)
 
-	# name
+	# Left column: name on top (white), price underneath (muted).
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_theme_constant_override("separation", 2)
 	var name_color: Color = TEXT if affordable else MUTED
 	var name_lbl := _label_sized(String(fw.name), SIZE_BODY, name_color)
 	name_lbl.clip_text = true
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	content.add_child(name_lbl)
+	left.add_child(name_lbl)
+	var price_text: String = "$%s  ·  %d eng" % [_fmt_num(cost), int(fw.get("engagement", 0))]
+	var price_lbl := _label_sized(price_text, SIZE_STATS, MUTED if affordable else DIM)
+	price_lbl.clip_text = true
+	price_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	left.add_child(price_lbl)
+	content.add_child(left)
 
-	# tier icon
+	# Right column: tier icon + stepper + cost preview.
+	var right := HBoxContainer.new()
+	right.add_theme_constant_override("separation", 6)
+	right.alignment = BoxContainer.ALIGNMENT_END
 	var tier_icon := _icon(TIER_ICONS.get(tier, TIER_ICONS[1]), 24)
-	content.add_child(tier_icon)
-
-	# stats line (cost + engagement only — tags are too wide for 400px rows)
-	var stats_text: String = "$%s · %d eng" % [
-		_fmt_num(cost), int(fw.get("engagement", 0))]
-	var stats_lbl := _label_sized(stats_text, SIZE_STATS, MUTED if affordable else DIM)
-	stats_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	stats_lbl.clip_text = true
-	stats_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	content.add_child(stats_lbl)
-
-	# stepper
+	right.add_child(tier_icon)
 	var minus := _qty_button("-")
 	var qty_lbl := _label_sized("0", SIZE_STATS, MUTED)
-	qty_lbl.custom_minimum_size = Vector2(28, 0)
+	qty_lbl.custom_minimum_size = Vector2(24, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _qty_button("+")
-	content.add_child(minus)
-	content.add_child(qty_lbl)
-	content.add_child(plus)
+	right.add_child(minus)
+	right.add_child(qty_lbl)
+	right.add_child(plus)
 
-	# cost preview
 	var cost_preview := _label_sized("", SIZE_STATS, GOLD)
-	cost_preview.custom_minimum_size = Vector2(64, 0)
+	cost_preview.custom_minimum_size = Vector2(56, 0)
 	cost_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cost_preview.clip_text = true
-	content.add_child(cost_preview)
+	right.add_child(cost_preview)
+	content.add_child(right)
 
 	var entry := {
 		"fw": fw, "wrap": wrap, "style": style, "stripe": stripe,
