@@ -143,10 +143,9 @@ func _build_top_bar() -> Control:
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	outer.add_child(h)
 
-	var total_nights: int = int(BalanceConfig.game_params().get("total_nights", 100))
 	var zone_name: String = String(BalanceConfig.get_zone(GameState.current_zone).get("name", ""))
 
-	h.add_child(_label_sized("Night %d / %d" % [GameState.night, total_nights], SIZE_TOPBAR, TEXT))
+	h.add_child(_label_sized("Night %d" % GameState.night, SIZE_TOPBAR, TEXT))
 
 	var zone_wrap := VBoxContainer.new()
 	zone_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
