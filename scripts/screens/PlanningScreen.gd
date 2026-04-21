@@ -3,6 +3,14 @@ extends Control
 ## Implements docs/planning_screen_modern_pivot.md.
 
 const ZoneBackgroundScript := preload("res://scripts/components/ZoneBackground.gd")
+const FireworkFieldScript := preload("res://scripts/fireworks/firework_field.gd")
+
+# How often an ambient burst fires in the strategy-screen backdrop.
+const AMBIENT_INTERVAL_MIN := 10.0
+const AMBIENT_INTERVAL_MAX := 15.0
+# Keep bursts away from the panel column edges so they don't feel stuck
+# behind text.
+const AMBIENT_EDGE_INSET := 200
 
 # --- fonts -------------------------------------------------------------------
 
@@ -111,6 +119,10 @@ var _warning_label: Label
 var _warning_tween: Tween
 var _shake_tween: Tween
 
+var _ambient_field: Node2D
+var _ambient_timer: Timer
+var _ambient_catalog: Array = []
+
 
 # ---------------------------------------------------------------------------
 func _ready() -> void:
@@ -138,20 +150,79 @@ func _add_backdrop() -> void:
 	var zone_id: int = GameState.current_zone
 	var sky_path: String = "res://assets/backgrounds/zone%d.png" % zone_id
 	var fg_path: String = "res://assets/backgrounds/zone%d-foreground.png" % zone_id
+
+	# Sky (back) → ParticleSlot (middle, hosts ambient bursts) → foreground
+	# silhouette (above bursts) → UI VBox added by _ready (top).
 	if ResourceLoader.exists(sky_path):
 		add_child(_fill_texture(sky_path))
+
 	var particle_slot := Control.new()
 	particle_slot.anchor_right = 1.0
 	particle_slot.anchor_bottom = 1.0
 	particle_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	particle_slot.name = "ParticleSlot"
 	add_child(particle_slot)
+	_setup_ambient_bursts(particle_slot)
+
 	if ResourceLoader.exists(fg_path):
 		add_child(_fill_texture(fg_path))
 	elif not ResourceLoader.exists(sky_path):
 		var bg: Control = ZoneBackgroundScript.new()
 		bg.zone_id = zone_id
 		add_child(bg)
+
+
+func _setup_ambient_bursts(slot: Control) -> void:
+	_ambient_catalog = _catalog_for_zone(GameState.current_zone)
+	if _ambient_catalog.is_empty():
+		return  # No curated list for this zone yet.
+
+	_ambient_field = FireworkFieldScript.new()
+	_ambient_field.name = "AmbientFireworkField"
+	# No host_ref — we don't want ambient bursts to shake / flash the
+	# Planning screen. All shake / flash / fade hooks inside the engine
+	# no-op when host_ref is null.
+	slot.add_child(_ambient_field)
+
+	_ambient_timer = Timer.new()
+	_ambient_timer.one_shot = true
+	_ambient_timer.wait_time = randf_range(AMBIENT_INTERVAL_MIN, AMBIENT_INTERVAL_MAX)
+	_ambient_timer.timeout.connect(_fire_ambient_burst)
+	add_child(_ambient_timer)
+	_ambient_timer.start()
+
+
+func _catalog_for_zone(zone_id: int) -> Array:
+	var key: String = _zone_catalog_category(zone_id)
+	if key == "":
+		return []
+	var out: Array = []
+	for entry in FireworkBursts.catalog():
+		if String(entry.get("category", "")) == key:
+			out.append(entry)
+	return out
+
+
+func _zone_catalog_category(zone_id: int) -> String:
+	# Only Zone 1 has a curated ambient list so far. Other zones bubble
+	# up through _catalog_for_zone returning an empty array, which skips
+	# the ambient system cleanly.
+	match zone_id:
+		1: return "Real — Backyard"
+	return ""
+
+
+func _fire_ambient_burst() -> void:
+	if _ambient_field == null or _ambient_catalog.is_empty():
+		return
+	var viewport: Vector2 = get_viewport_rect().size
+	var fw: Dictionary = _ambient_catalog[randi() % _ambient_catalog.size()]
+	var x_min: float = float(AMBIENT_EDGE_INSET)
+	var x_max: float = maxf(x_min, viewport.x - float(AMBIENT_EDGE_INSET))
+	var ground := Vector2(randf_range(x_min, x_max), viewport.y - 120.0)
+	_ambient_field.call("launch", fw, ground)
+	_ambient_timer.wait_time = randf_range(AMBIENT_INTERVAL_MIN, AMBIENT_INTERVAL_MAX)
+	_ambient_timer.start()
 
 
 func _fill_texture(path: String) -> TextureRect:
