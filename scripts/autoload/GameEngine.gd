@@ -334,14 +334,19 @@ func check_end_of_run_unlocks(ending: String) -> Array[String]:
 	return earned
 
 
-# Returns purchasable fireworks: always includes non-unlockable; includes
-# unlockable only if MetaState has it unlocked. Tier is not zone-gated per
-# BRIEF — tiers are cost/engagement categories, available from any zone.
+# Returns purchasable fireworks. Filtered by:
+#   • tier gate: firework.tier <= current_zone (so Zone 1 sees only T1,
+#     Zone 2 sees T1+T2, etc. Zone 4+ sees all tiers since max tier is 4).
+#   • unlock gate: unlockable fireworks require MetaState entry.
+# This is per docs/stage_2_corrections.md Issue 2.
 func available_fireworks() -> Array:
 	var out: Array = []
 	for fw in BalanceConfig.fireworks():
-		if MetaState.is_firework_unlocked(fw):
-			out.append(fw)
+		if int(fw.get("tier", 1)) > GameState.current_zone:
+			continue
+		if not MetaState.is_firework_unlocked(fw):
+			continue
+		out.append(fw)
 	return out
 
 
