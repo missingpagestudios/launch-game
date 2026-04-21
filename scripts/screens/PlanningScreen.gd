@@ -171,7 +171,7 @@ func _build_firework_card(fw: Dictionary) -> Control:
 	var cost: int = int(fw.get("cost", 0))
 	var affordable: bool = float(cost) <= GameState.money
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 80)
+	wrap.custom_minimum_size = Vector2(0, 104)
 	var style := _card_style(CARD_AFFORDABLE if affordable else CARD_UNAFFORDABLE)
 	wrap.add_theme_stylebox_override("panel", style)
 
@@ -183,13 +183,13 @@ func _build_firework_card(fw: Dictionary) -> Control:
 	wrap.add_child(pad)
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 4)
 	pad.add_child(v)
 
 	# Row 1: name + tier badge
 	var row_name := HBoxContainer.new()
 	row_name.add_theme_constant_override("separation", 8)
-	var name_lbl: Label = _label_sized(String(fw.name), 16, TEXT if affordable else MUTED)
+	var name_lbl: Label = _label_sized(String(fw.name), 24, TEXT if affordable else MUTED)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row_name.add_child(name_lbl)
 	row_name.add_child(_tier_badge(int(fw.get("tier", 1))))
@@ -200,15 +200,15 @@ func _build_firework_card(fw: Dictionary) -> Control:
 	var stats_line: String = "$%s · %d eng" % [_fmt_num(cost), int(fw.get("engagement", 0))]
 	if not tags.is_empty():
 		stats_line += " · " + ", ".join(tags)
-	var stats_lbl: Label = _label_sized(stats_line, 16, MUTED)
+	var stats_lbl: Label = _label_sized(stats_line, 24, TEXT if affordable else MUTED)
 	v.add_child(stats_lbl)
 
 	# Row 3: qty controls left, cost preview right
 	var row_ctrl := HBoxContainer.new()
 	row_ctrl.add_theme_constant_override("separation", 6)
 	var minus := _small_button("-")
-	var qty_lbl := _label_sized("0", 16, GOLD)
-	qty_lbl.custom_minimum_size = Vector2(36, 0)
+	var qty_lbl := _label_sized("0", 24, GOLD)
+	qty_lbl.custom_minimum_size = Vector2(40, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _small_button("+")
 	row_ctrl.add_child(minus)
@@ -217,7 +217,7 @@ func _build_firework_card(fw: Dictionary) -> Control:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row_ctrl.add_child(spacer)
-	var cost_preview := _label_sized("", 16, GOLD)
+	var cost_preview := _label_sized("", 24, GOLD)
 	cost_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row_ctrl.add_child(cost_preview)
 	v.add_child(row_ctrl)
@@ -244,7 +244,7 @@ func _tier_badge(tier: int) -> Control:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 6)
 	h.add_child(c)
-	h.add_child(_label_sized("T%d" % tier, 16, TEXT))
+	h.add_child(_label_sized("T%d" % tier, 24, TEXT))
 	wrap.add_child(h)
 	return wrap
 
@@ -289,7 +289,7 @@ func _build_marketing_and_enhancements() -> Control:
 		var none_btn := CheckBox.new()
 		none_btn.text = "None"
 		none_btn.button_pressed = true
-		none_btn.add_theme_font_size_override("font_size", 16)
+		none_btn.add_theme_font_size_override("font_size", 24)
 		group_container.add_child(none_btn)
 		var buttons: Array[CheckBox] = [none_btn]
 		var cat_str: String = String(category)
@@ -304,7 +304,7 @@ func _build_marketing_and_enhancements() -> Control:
 				cb.text += " (+%d%% eng)" % int(float(eh_dict.eng_mult) * 100)
 			if eh_dict.has("tip_mult"):
 				cb.text += " (+%d%% tips)" % int(float(eh_dict.tip_mult) * 100)
-			cb.add_theme_font_size_override("font_size", 16)
+			cb.add_theme_font_size_override("font_size", 24)
 			group_container.add_child(cb)
 			buttons.append(cb)
 			var eh_name: String = String(eh_dict.name)
@@ -322,13 +322,13 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 		String(mk.name),
 		_fmt_num(int(mk.get("cost", 0))),
 		_fmt_num(int(mk.get("attendees", 0))),
-		int(mk.get("cap", 0))], 16, TEXT)
+		int(mk.get("cap", 0))], 24, TEXT)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 
 	var minus := _small_button("-")
-	var qty_label := _label_sized("0", 16, GOLD)
-	qty_label.custom_minimum_size = Vector2(36, 0)
+	var qty_label := _label_sized("0", 24, GOLD)
+	qty_label.custom_minimum_size = Vector2(40, 0)
 	qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _small_button("+")
 	minus.pressed.connect(func() -> void: _nudge_marketing(mk, -1, qty_label))
@@ -353,7 +353,7 @@ func _build_upgrades_panel_body() -> Control:
 		b.text = String(cat).capitalize()
 		b.toggle_mode = true
 		b.button_pressed = (cat == "All")
-		b.add_theme_font_size_override("font_size", 16)
+		b.add_theme_font_size_override("font_size", 24)
 		b.custom_minimum_size = Vector2(0, 28)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var cat_str: String = cat
@@ -458,7 +458,7 @@ func _upgrade_card(up: Dictionary) -> Control:
 	var cost: int = int(up.get("cost", 0))
 	var affordable: bool = float(cost) <= GameState.money
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 88)
+	wrap.custom_minimum_size = Vector2(0, 112)
 	var style := _card_style(CARD_AFFORDABLE if affordable else CARD_UNAFFORDABLE)
 	wrap.add_theme_stylebox_override("panel", style)
 
@@ -470,31 +470,31 @@ func _upgrade_card(up: Dictionary) -> Control:
 	wrap.add_child(pad)
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 4)
 	pad.add_child(v)
 
 	# Row 1: name + category tag
 	var row_name := HBoxContainer.new()
 	row_name.add_theme_constant_override("separation", 8)
-	var name_lbl: Label = _label_sized(String(up.name), 16, TEXT if affordable else MUTED)
+	var name_lbl: Label = _label_sized(String(up.name), 24, TEXT if affordable else MUTED)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row_name.add_child(name_lbl)
-	row_name.add_child(_label_sized("[%s]" % String(up.get("category", "")), 16, MUTED))
+	row_name.add_child(_label_sized("[%s]" % String(up.get("category", "")), 24, MUTED))
 	v.add_child(row_name)
 
 	# Row 2: cost
-	v.add_child(_label_sized("$%s" % _fmt_num(cost), 16, GOLD if affordable else MUTED))
+	v.add_child(_label_sized("$%s" % _fmt_num(cost), 24, GOLD if affordable else MUTED))
 
 	# Row 3: effect + buy
 	var row_end := HBoxContainer.new()
 	row_end.add_theme_constant_override("separation", 8)
 	var effect_text: String = _effect_summary(up.get("effect", {}))
-	var effect_lbl := _label_sized(effect_text, 16, TEXT if affordable else MUTED)
+	var effect_lbl := _label_sized(effect_text, 24, TEXT if affordable else MUTED)
 	effect_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row_end.add_child(effect_lbl)
 	var buy_btn := Button.new()
 	buy_btn.text = "Buy"
-	buy_btn.add_theme_font_size_override("font_size", 16)
+	buy_btn.add_theme_font_size_override("font_size", 24)
 	buy_btn.custom_minimum_size = Vector2(72, 32)
 	buy_btn.disabled = not affordable
 	var name_str: String = String(up.name)
@@ -567,7 +567,7 @@ func _build_bottom_bar() -> Control:
 
 	_run_show_button = Button.new()
 	_run_show_button.text = "▶ Run Show"
-	_run_show_button.add_theme_font_size_override("font_size", 16)
+	_run_show_button.add_theme_font_size_override("font_size", 24)
 	_run_show_button.custom_minimum_size = Vector2(200, 48)
 	_run_show_button.pressed.connect(_on_run_show_pressed)
 	h.add_child(_run_show_button)
@@ -701,8 +701,8 @@ func _label_sized(text: String, font_size: int, color: Color) -> Label:
 func _small_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.add_theme_font_size_override("font_size", 16)
-	b.custom_minimum_size = Vector2(32, 32)
+	b.add_theme_font_size_override("font_size", 24)
+	b.custom_minimum_size = Vector2(40, 36)
 	return b
 
 

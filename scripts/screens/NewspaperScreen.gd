@@ -77,19 +77,19 @@ func _ready() -> void:
 	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	main.add_child(headline)
 
-	var body := _label(String(article.body), 16, TEXT)
+	var body := _label(String(article.body), 24, TEXT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	main.add_child(body)
 
 	var synergy: String = String(article.get("synergy_callout", ""))
 	if synergy != "":
-		main.add_child(_label(synergy, 16, GOLD))
+		main.add_child(_label(synergy, 24, GOLD))
 
 	var cause: String = String(article.get("cause_mention", ""))
 	if cause != "":
 		main.add_child(_spacer(8))
 		main.add_child(_label("— SECONDARY NOTICE —", 16, MUTED))
-		var cause_lbl := _label(cause, 16, TEXT)
+		var cause_lbl := _label(cause, 24, TEXT)
 		cause_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		main.add_child(cause_lbl)
 
@@ -97,11 +97,11 @@ func _ready() -> void:
 	var meteor: String = String(article.get("meteor_column", ""))
 	if meteor != "":
 		var sub := VBoxContainer.new()
-		sub.custom_minimum_size = Vector2(280, 0)
+		sub.custom_minimum_size = Vector2(320, 0)
 		sub.add_theme_constant_override("separation", 6)
 		columns.add_child(sub)
 		sub.add_child(_label("NIGHT SKY COLUMN", 16, MUTED))
-		var line := _label(meteor, 16, TEXT)
+		var line := _label(meteor, 24, TEXT)
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		sub.add_child(line)
 		sub.add_child(_label("— E. Chen, observatory", 16, MUTED))
@@ -110,8 +110,8 @@ func _ready() -> void:
 
 	var cont := Button.new()
 	cont.text = "Continue to Planning →"
-	cont.add_theme_font_size_override("font_size", 16)
-	cont.custom_minimum_size = Vector2(260, 44)
+	cont.add_theme_font_size_override("font_size", 24)
+	cont.custom_minimum_size = Vector2(300, 56)
 	cont.pressed.connect(func() -> void: Router.after_newspaper())
 	var btn_wrap := HBoxContainer.new()
 	btn_wrap.alignment = BoxContainer.ALIGNMENT_CENTER

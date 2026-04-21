@@ -33,14 +33,14 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
 
-	var sub := _label("Eight requests have arrived at your office. You have the means to fund one.", 16, MUTED)
+	var sub := _label("Eight requests have arrived at your office. You have the means to fund one.", 24, MUTED)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(sub)
 
 	var info := _label("Cash on hand: $%s    Donation cost: $%s" % [
 		_fmt(GameState.money),
-		_fmt(float(BalanceConfig.game_params().get("donation_cost", 2_500_000_000)))], 16, GOLD)
+		_fmt(float(BalanceConfig.game_params().get("donation_cost", 2_500_000_000)))], 24, GOLD)
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(info)
 
@@ -65,8 +65,8 @@ func _ready() -> void:
 
 	var skip := Button.new()
 	skip.text = "Skip donation — keep $%s" % _fmt(float(BalanceConfig.game_params().get("donation_cost", 2_500_000_000)))
-	skip.add_theme_font_size_override("font_size", 16)
-	skip.custom_minimum_size = Vector2(400, 40)
+	skip.add_theme_font_size_override("font_size", 24)
+	skip.custom_minimum_size = Vector2(500, 56)
 	skip.pressed.connect(func() -> void: Router.donation_chosen(""))
 	var skip_wrap := HBoxContainer.new()
 	skip_wrap.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -76,7 +76,7 @@ func _ready() -> void:
 
 func _build_cause_card(cause: Dictionary) -> Control:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(260, 240)
+	card.custom_minimum_size = Vector2(300, 280)
 	card.add_theme_stylebox_override("panel", _stylebox(CARD_BG))
 
 	var pad := MarginContainer.new()
@@ -90,18 +90,18 @@ func _build_cause_card(cause: Dictionary) -> Control:
 	v.add_theme_constant_override("separation", 8)
 	pad.add_child(v)
 
-	v.add_child(_label(String(cause.name), 16, TEXT))
+	v.add_child(_label(String(cause.name), 24, TEXT))
 	v.add_child(_label("— %s" % String(cause.character), 16, MUTED))
 
-	var plea := _label("\"%s\"" % String(cause.plea), 16, TEXT)
+	var plea := _label("\"%s\"" % String(cause.plea), 24, TEXT)
 	plea.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	plea.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(plea)
 
 	var btn := Button.new()
 	btn.text = "Fund This Cause"
-	btn.add_theme_font_size_override("font_size", 16)
-	btn.custom_minimum_size = Vector2(0, 36)
+	btn.add_theme_font_size_override("font_size", 24)
+	btn.custom_minimum_size = Vector2(0, 48)
 	var cause_id := String(cause.id)
 	btn.pressed.connect(func() -> void: Router.donation_chosen(cause_id))
 	v.add_child(btn)

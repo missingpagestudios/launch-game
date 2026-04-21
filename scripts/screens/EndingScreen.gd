@@ -43,7 +43,7 @@ func _ready() -> void:
 
 	v.add_child(_spacer(8))
 
-	var body := _label(body_text, 16, TEXT)
+	var body := _label(body_text, 24, TEXT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(body)
 
@@ -64,7 +64,7 @@ func _ready() -> void:
 		v.add_child(_spacer(8))
 		v.add_child(_label("NEW FIREWORKS UNLOCKED:", 32, GOLD))
 		for u in unlock_list:
-			v.add_child(_label("  • %s" % String(u), 16, GOLD))
+			v.add_child(_label("  • %s" % String(u), 24, GOLD))
 
 	v.add_child(_spacer(24))
 
@@ -74,15 +74,15 @@ func _ready() -> void:
 
 	var title_btn := Button.new()
 	title_btn.text = "Return to Title"
-	title_btn.add_theme_font_size_override("font_size", 16)
-	title_btn.custom_minimum_size = Vector2(220, 44)
+	title_btn.add_theme_font_size_override("font_size", 24)
+	title_btn.custom_minimum_size = Vector2(260, 56)
 	title_btn.pressed.connect(func() -> void: Router.return_to_title_from_ending())
 	btn_row.add_child(title_btn)
 
 	var again_btn := Button.new()
 	again_btn.text = "Start New Run"
-	again_btn.add_theme_font_size_override("font_size", 16)
-	again_btn.custom_minimum_size = Vector2(220, 44)
+	again_btn.add_theme_font_size_override("font_size", 24)
+	again_btn.custom_minimum_size = Vector2(260, 56)
 	again_btn.pressed.connect(func() -> void: Router.start_new_run())
 	btn_row.add_child(again_btn)
 
@@ -125,7 +125,7 @@ func _stat(label: String, value: String) -> Control:
 	var l := _label(label, 16, MUTED)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(l)
-	h.add_child(_label(value, 16, GOLD))
+	h.add_child(_label(value, 24, GOLD))
 	return h
 
 
