@@ -4,12 +4,12 @@
 
 [resource]
 default_font = ExtResource("1_font")
-default_font_size = 24
+default_font_size = 22
 Label/fonts/font = ExtResource("1_font")
-Label/font_sizes/font_size = 24
+Label/font_sizes/font_size = 22
 Button/fonts/font = ExtResource("1_font")
-Button/font_sizes/font_size = 24
+Button/font_sizes/font_size = 20
 CheckBox/fonts/font = ExtResource("1_font")
-CheckBox/font_sizes/font_size = 24
+CheckBox/font_sizes/font_size = 20
 LineEdit/fonts/font = ExtResource("1_font")
-LineEdit/font_sizes/font_size = 24
+LineEdit/font_sizes/font_size = 22

@@ -63,24 +63,24 @@ func _ready() -> void:
 	var syns: Array = r.get("synergies_triggered", [])
 	if not syns.is_empty():
 		v.add_child(_spacer(8))
-		v.add_child(_label("Synergies: %s" % ", ".join(syns), 24, GOLD))
+		v.add_child(_label("Synergies: %s" % ", ".join(syns), 22, GOLD))
 
 	var unlocks: Array = r.get("unlocks_earned", [])
 	if not unlocks.is_empty():
-		v.add_child(_label("NEW FIREWORK UNLOCKED: %s" % ", ".join(unlocks), 24, GOLD))
+		v.add_child(_label("NEW FIREWORK UNLOCKED: %s" % ", ".join(unlocks), 22, GOLD))
 
 	if bool(r.get("zone_advanced", false)):
 		v.add_child(_label("ZONE CLEARED — now in %s" % String(BalanceConfig.get_zone(GameState.current_zone).get("name", "")), 32, GOLD))
 
 	if bool(r.get("zone_6_clear_triggered", false)):
-		v.add_child(_label("A letter arrives. Eight requests are waiting at your office.", 24, GOLD))
+		v.add_child(_label("A letter arrives. Eight requests are waiting at your office.", 22, GOLD))
 
 	v.add_child(_spacer(24))
 
 	var cont := Button.new()
 	cont.text = "Continue →"
-	cont.add_theme_font_size_override("font_size", 24)
-	cont.custom_minimum_size = Vector2(220, 56)
+	cont.add_theme_font_size_override("font_size", 20)
+	cont.custom_minimum_size = Vector2(220, 48)
 	cont.pressed.connect(func() -> void: Router.after_show())
 	v.add_child(cont)
 
@@ -91,7 +91,7 @@ func _stat_row(label: String, value: String, color: Color) -> Control:
 	var l := _label(label, 16, MUTED)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(l)
-	h.add_child(_label(value, 24, color))
+	h.add_child(_label(value, 22, color))
 	return h
 
 

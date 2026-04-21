@@ -4,4 +4,5 @@
 export.cfg
 export_presets.cfg
 *.translation
+*.psd
 .DS_Store
