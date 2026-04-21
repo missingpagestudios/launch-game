@@ -1,0 +1,217 @@
+{
+  "zones": [
+    {
+      "id": 1, "name": "Backyard",
+      "threshold_repeat_fans": 0,
+      "walkup_min": 3, "walkup_max": 7, "attendee_cap": 30,
+      "revenue_per_repeat": 1.50, "revenue_per_attendee": 0.75,
+      "max_conversion": 0.60, "base_conversion": 0.08, "quality_target": 1.0,
+      "interest_threshold": 0.3, "show_duration": 30, "firework_cap": 40
+    },
+    {
+      "id": 2, "name": "Neighborhood",
+      "threshold_repeat_fans": 20,
+      "walkup_min": 15, "walkup_max": 30, "attendee_cap": 300,
+      "revenue_per_repeat": 3.00, "revenue_per_attendee": 1.50,
+      "max_conversion": 0.50, "base_conversion": 0.06, "quality_target": 1.5,
+      "interest_threshold": 0.5, "show_duration": 30, "firework_cap": 75
+    },
+    {
+      "id": 3, "name": "Town",
+      "threshold_repeat_fans": 150,
+      "walkup_min": 100, "walkup_max": 200, "attendee_cap": 3000,
+      "revenue_per_repeat": 8.00, "revenue_per_attendee": 4.00,
+      "max_conversion": 0.40, "base_conversion": 0.04, "quality_target": 2.0,
+      "interest_threshold": 1.0, "show_duration": 45, "firework_cap": 150
+    },
+    {
+      "id": 4, "name": "City",
+      "threshold_repeat_fans": 1500,
+      "walkup_min": 1500, "walkup_max": 3500, "attendee_cap": 75000,
+      "revenue_per_repeat": 25.00, "revenue_per_attendee": 12.00,
+      "max_conversion": 0.35, "base_conversion": 0.04, "quality_target": 3.0,
+      "interest_threshold": 2.0, "show_duration": 45, "firework_cap": 225
+    },
+    {
+      "id": 5, "name": "Regional",
+      "threshold_repeat_fans": 5000,
+      "walkup_min": 15000, "walkup_max": 35000, "attendee_cap": 1500000,
+      "revenue_per_repeat": 80.00, "revenue_per_attendee": 40.00,
+      "max_conversion": 0.30, "base_conversion": 0.025, "quality_target": 4.0,
+      "interest_threshold": 3.0, "show_duration": 50, "firework_cap": 275
+    },
+    {
+      "id": 6, "name": "World",
+      "threshold_repeat_fans": 30000,
+      "walkup_min": 200000, "walkup_max": 500000, "attendee_cap": 5000000000,
+      "revenue_per_repeat": 300.00, "revenue_per_attendee": 150.00,
+      "max_conversion": 0.25, "base_conversion": 0.025, "quality_target": 6.0,
+      "interest_threshold": 5.0, "show_duration": 60, "firework_cap": 300
+    }
+  ],
+
+  "fireworks": [
+    {"name": "Sparkler", "cost": 2, "engagement": 1, "tier": 1, "tags": ["handheld", "golden"]},
+    {"name": "Firecracker", "cost": 3, "engagement": 2, "tier": 1, "tags": ["loud"]},
+    {"name": "Snake", "cost": 4, "engagement": 1, "tier": 1, "tags": ["ground", "smoke"]},
+    {"name": "Bottle Rocket", "cost": 5, "engagement": 2, "tier": 1, "tags": ["rising", "classic"]},
+    {"name": "Smoke Bomb", "cost": 4, "engagement": 2, "tier": 1, "tags": ["smoke", "color"]},
+    {"name": "Spinner", "cost": 6, "engagement": 3, "tier": 1, "tags": ["spinning", "ground"]},
+    {"name": "Crackle Ball", "cost": 8, "engagement": 4, "tier": 1, "tags": ["crackle", "loud"], "unlockable": true, "unlock_id": "firecracker_dedication", "unlock_description": "Fire 1,000 total firecrackers across all runs"},
+    {"name": "Fountain", "cost": 10, "engagement": 5, "tier": 1, "tags": ["fountain", "sustained"], "unlockable": true, "unlock_id": "humble_finale", "unlock_description": "Complete a run ending in Zone 1 or 2"},
+    {"name": "Roman Candle", "cost": 12, "engagement": 4, "tier": 1, "tags": ["rising", "sequential"]},
+    {"name": "Small Mortar", "cost": 15, "engagement": 5, "tier": 1, "tags": ["rising", "burst"]},
+
+    {"name": "Repeater", "cost": 20, "engagement": 6, "tier": 2, "tags": ["rapid", "cake"]},
+    {"name": "Whistler", "cost": 25, "engagement": 7, "tier": 2, "tags": ["sound", "rising"]},
+    {"name": "Comet", "cost": 30, "engagement": 8, "tier": 2, "tags": ["trail", "rising"]},
+    {"name": "Mine", "cost": 35, "engagement": 10, "tier": 2, "tags": ["ground", "burst"]},
+    {"name": "Peony", "cost": 40, "engagement": 10, "tier": 2, "tags": ["classic", "burst"]},
+    {"name": "Chrysanthemum", "cost": 45, "engagement": 11, "tier": 2, "tags": ["classic", "full"]},
+    {"name": "Strobe", "cost": 50, "engagement": 9, "tier": 2, "tags": ["flashing", "white"]},
+    {"name": "Salute", "cost": 55, "engagement": 12, "tier": 2, "tags": ["loud", "impressive"]},
+    {"name": "Glitter Mine", "cost": 65, "engagement": 16, "tier": 2, "tags": ["glitter", "ground"], "unlockable": true, "unlock_id": "tier_minimalist", "unlock_description": "Complete a run using only Tier 1-2 fireworks"},
+    {"name": "Star", "cost": 80, "engagement": 18, "tier": 2, "tags": ["classic", "burst"], "unlockable": true, "unlock_id": "zone_2_finale", "unlock_description": "Complete a Zone 2 finale (reach night 100 while in Zone 2)"},
+
+    {"name": "Pro Peony", "cost": 50, "engagement": 20, "tier": 3, "tags": ["professional", "classic"]},
+    {"name": "Pro Chrysanthemum", "cost": 60, "engagement": 22, "tier": 3, "tags": ["professional", "classic"]},
+    {"name": "Dahlia", "cost": 75, "engagement": 26, "tier": 3, "tags": ["layered", "impressive"]},
+    {"name": "Willow", "cost": 90, "engagement": 29, "tier": 3, "tags": ["trailing", "elegant"]},
+    {"name": "Palm", "cost": 110, "engagement": 33, "tier": 3, "tags": ["tree", "long"]},
+    {"name": "Crossette", "cost": 140, "engagement": 36, "tier": 3, "tags": ["splitting", "dynamic"]},
+    {"name": "Brocade", "cost": 175, "engagement": 39, "tier": 3, "tags": ["shimmering", "gold"]},
+    {"name": "Kamuro", "cost": 210, "engagement": 42, "tier": 3, "tags": ["cascading", "long"]},
+    {"name": "Spider", "cost": 250, "engagement": 43, "tier": 3, "tags": ["web", "intricate"]},
+    {"name": "Horsetail", "cost": 290, "engagement": 44, "tier": 3, "tags": ["falling", "elegant"]},
+    {"name": "Ring", "cost": 325, "engagement": 56, "tier": 3, "tags": ["shape", "novel"], "unlockable": true, "unlock_id": "library_funded", "unlock_description": "Fund the Local Library Endowment cause to completion"},
+    {"name": "Heart", "cost": 360, "engagement": 59, "tier": 3, "tags": ["shape", "emotional"], "unlockable": true, "unlock_id": "hospital_funded", "unlock_description": "Fund the Children's Hospital Wing cause to completion"},
+    {"name": "Smiley", "cost": 400, "engagement": 62, "tier": 3, "tags": ["shape", "fun"], "unlockable": true, "unlock_id": "early_zone_3", "unlock_description": "Reach Zone 3 by night 20"},
+    {"name": "Star Pattern", "cost": 425, "engagement": 55, "tier": 3, "tags": ["shape", "classic"]},
+    {"name": "Multibreak", "cost": 450, "engagement": 57, "tier": 3, "tags": ["multi-stage", "complex"]},
+    {"name": "Color-Change", "cost": 475, "engagement": 60, "tier": 3, "tags": ["dynamic", "technical"]},
+    {"name": "Strobe Willow", "cost": 500, "engagement": 61, "tier": 3, "tags": ["hybrid", "technical"]},
+    {"name": "Glitter Palm", "cost": 475, "engagement": 72, "tier": 3, "tags": ["hybrid", "luxurious"], "unlockable": true, "unlock_id": "variety_show", "unlock_description": "Run a show with 10+ different firework types in a single night"},
+    {"name": "Hummer", "cost": 425, "engagement": 55, "tier": 3, "tags": ["sound"]},
+    {"name": "Pro Salute", "cost": 500, "engagement": 65, "tier": 3, "tags": ["loud", "professional"]},
+
+    {"name": "Drone Swarm", "cost": 5000, "engagement": 100, "tier": 4, "tags": ["drones", "coordinated"]},
+    {"name": "Quantum Bloom", "cost": 25000, "engagement": 180, "tier": 4, "tags": ["particle", "strange"]},
+    {"name": "Holo Letter A", "cost": 100000, "engagement": 280, "tier": 4, "tags": ["hologram", "letters"]},
+    {"name": "Nano Fractal", "cost": 500000, "engagement": 500, "tier": 4, "tags": ["fractal", "technical"]},
+    {"name": "Plasma Vortex", "cost": 2000000, "engagement": 900, "tier": 4, "tags": ["plasma", "swirling"]},
+    {"name": "Black Hole Shell", "cost": 10000000, "engagement": 2000, "tier": 4, "tags": ["gravity", "dark"]},
+    {"name": "Aurora Cascade", "cost": 50000000, "engagement": 6000, "tier": 4, "tags": ["aurora", "sweeping"], "unlockable": true, "unlock_id": "wildlife_funded", "unlock_description": "Fund the Wildlife Conservation cause to completion"},
+    {"name": "Kinetic Wireframe Cube", "cost": 200000000, "engagement": 14400, "tier": 4, "tags": ["geometric", "intricate"], "unlockable": true, "unlock_id": "cumulative_fans", "unlock_description": "Accumulate 10M total repeat fans across all runs"},
+    {"name": "Gravity Loop", "cost": 1000000000, "engagement": 48000, "tier": 4, "tags": ["gravity", "impossible"], "unlockable": true, "unlock_id": "fake_ending_seen", "unlock_description": "Complete a run WITHOUT funding asteroid research"},
+    {"name": "Singularity", "cost": 10000000000, "engagement": 240000, "tier": 4, "tags": ["ultimate", "awe"], "unlockable": true, "unlock_id": "true_ending_achieved", "unlock_description": "Complete a run funding asteroid research (true ending)"}
+  ],
+
+  "marketing": [
+    {"name": "Flyers", "cost": 10, "attendees": 5, "cap": 20, "min_zone": 1},
+    {"name": "Newsletter Mention", "cost": 40, "attendees": 25, "cap": 5, "min_zone": 2},
+    {"name": "Newspaper Ad", "cost": 150, "attendees": 125, "cap": 3, "min_zone": 3},
+    {"name": "Radio Spot", "cost": 600, "attendees": 800, "cap": 2, "min_zone": 3},
+    {"name": "Billboard", "cost": 1500, "attendees": 2500, "cap": 3, "min_zone": 4},
+    {"name": "Social Media Push", "cost": 3000, "attendees": 5000, "cap": 3, "min_zone": 4},
+    {"name": "TV Commercial", "cost": 8000, "attendees": 15000, "cap": 2, "min_zone": 4},
+    {"name": "National Press", "cost": 50000, "attendees": 100000, "cap": 2, "min_zone": 5},
+    {"name": "Streaming Boost", "cost": 500000, "attendees": 2000000, "cap": 2, "min_zone": 6}
+  ],
+
+  "enhancements": {
+    "snacks": [
+      {"name": "Candy from Store", "cost": 20, "tip_mult": 0.05, "min_zone": 1},
+      {"name": "Vending Machines", "cost": 100, "tip_mult": 0.10, "min_zone": 2},
+      {"name": "Food Vendors", "cost": 500, "tip_mult": 0.20, "min_zone": 3},
+      {"name": "Catering Team", "cost": 3000, "tip_mult": 0.35, "min_zone": 4},
+      {"name": "Gourmet Experience", "cost": 25000, "tip_mult": 0.50, "min_zone": 5}
+    ],
+    "entertainment": [
+      {"name": "Mom & Pop Band", "cost": 80, "eng_mult": 0.10, "min_zone": 2},
+      {"name": "Local Professional Band", "cost": 400, "eng_mult": 0.20, "min_zone": 3},
+      {"name": "Regional Music Act", "cost": 2500, "eng_mult": 0.30, "min_zone": 4},
+      {"name": "National Touring Band", "cost": 20000, "eng_mult": 0.40, "min_zone": 5},
+      {"name": "Top 40 Artist", "cost": 500000, "eng_mult": 0.60, "min_zone": 6}
+    ],
+    "sound": [
+      {"name": "Boombox", "cost": 50, "eng_mult": 0.05, "min_zone": 1},
+      {"name": "Basic PA System", "cost": 300, "eng_mult": 0.15, "min_zone": 2},
+      {"name": "Premium Sound", "cost": 1500, "eng_mult": 0.25, "min_zone": 3},
+      {"name": "Concert Sound System", "cost": 15000, "eng_mult": 0.40, "min_zone": 5}
+    ],
+    "host": [
+      {"name": "Local MC", "cost": 50, "eng_mult": 0.05, "min_zone": 1},
+      {"name": "Professional Host", "cost": 500, "eng_mult": 0.15, "min_zone": 3},
+      {"name": "Radio Personality", "cost": 3000, "eng_mult": 0.25, "min_zone": 4},
+      {"name": "Celebrity Host", "cost": 30000, "eng_mult": 0.40, "min_zone": 5}
+    ],
+    "specialist": [
+      {"name": "Pyro-Choreographer", "cost": 25000, "eng_mult": 0.30, "min_zone": 5},
+      {"name": "Fireworks Consultant", "cost": 500000, "eng_mult": 0.60, "min_zone": 6}
+    ]
+  },
+
+  "upgrades": [
+    {"name": "Flyer Printer", "cost": 500, "category": "marketing", "effect": {"attendees_permanent": 2}, "min_zone": 1},
+    {"name": "Website", "cost": 10000, "category": "marketing", "effect": {"attendees_permanent": 15}, "min_zone": 2},
+    {"name": "Social Media Accounts", "cost": 100000, "category": "marketing", "effect": {"attendees_permanent": 100}, "min_zone": 3},
+    {"name": "Radio Partnership", "cost": 2000000, "category": "marketing", "effect": {"attendees_permanent": 500}, "min_zone": 4},
+    {"name": "TV Network Deal", "cost": 100000000, "category": "marketing", "effect": {"attendees_permanent": 5000}, "min_zone": 5},
+    {"name": "Live Stream Setup", "cost": 100000000, "category": "marketing", "effect": {"attendees_permanent": 100000, "unlocks_donation": true, "unlocks_zone_6_finale": true}, "min_zone": 5},
+
+    {"name": "Portable Stage", "cost": 5000, "category": "revenue", "effect": {"tip_mult_permanent": 0.10}, "min_zone": 2},
+    {"name": "Professional Stage", "cost": 500000, "category": "revenue", "effect": {"tip_mult_permanent": 0.25}, "min_zone": 3},
+    {"name": "Custom Arena", "cost": 50000000, "category": "revenue", "effect": {"tip_mult_permanent": 0.40}, "min_zone": 4},
+    {"name": "World Stage", "cost": 5000000000, "category": "revenue", "effect": {"tip_mult_permanent": 0.60}, "min_zone": 5},
+
+    {"name": "Local Assistant", "cost": 2500, "category": "crew", "effect": {"eng_mult_permanent": 0.10}, "min_zone": 2},
+    {"name": "Pyrotechnic Crew", "cost": 100000, "category": "crew", "effect": {"eng_mult_permanent": 0.20}, "min_zone": 3},
+    {"name": "Production Team", "cost": 10000000, "category": "crew", "effect": {"eng_mult_permanent": 0.30}, "min_zone": 4},
+
+    {"name": "Fireworks Stage", "cost": 75000, "category": "infrastructure", "effect": {"show_quality_mult": 0.15}, "min_zone": 3},
+    {"name": "Research Lab", "cost": 50000000000, "category": "infrastructure", "effect": {"unlocks_tier_4_research": true}, "min_zone": 6}
+  ],
+
+  "synergies": [
+    {"name": "Classic Trio", "requires_tags": [["handheld", "golden"], ["loud"], ["rising", "sequential"]], "min_count": 1, "bonus": 0.10},
+    {"name": "Cake Show", "requires_tier": 2, "min_count": 5, "bonus": 0.15},
+    {"name": "All Tiers", "requires_all_tiers": true, "bonus": 0.20},
+    {"name": "Finale Cascade", "requires_tags": [["trailing"], ["tree", "long"], ["cascading", "long"]], "min_count": 3, "bonus": 0.25},
+    {"name": "Tech Showcase", "requires_tier": 4, "min_count": 3, "bonus": 0.40},
+    {"name": "Shape Show", "requires_tags": [["shape"]], "min_count": 4, "bonus": 0.30}
+  ],
+
+  "donation_causes": [
+    {"id": "library", "name": "Local Library Endowment", "character": "Mrs. Patterson",
+     "is_correct": false, "plea": "A new wing for the library. The children need somewhere to dream."},
+    {"id": "music", "name": "Music Education Program", "character": "Mr. Chen",
+     "is_correct": false, "plea": "Instruments, teachers, scholarships. Music changed my life. Let me change others'."},
+    {"id": "hospital", "name": "Children's Hospital Wing", "character": "Dr. Williams",
+     "is_correct": false, "plea": "Sick children deserve the best care. Help us expand pediatric services."},
+    {"id": "wildlife", "name": "Wildlife Conservation", "character": "Park Ranger Jensen",
+     "is_correct": false, "plea": "Our forests and the creatures in them need champions. Be ours."},
+    {"id": "veterans", "name": "Veterans Support Services", "character": "Sgt. Rodriguez",
+     "is_correct": false, "plea": "Those who served deserve services. Mental health, housing, jobs."},
+    {"id": "mental_health", "name": "Mental Health Services", "character": "Dr. Thompson",
+     "is_correct": false, "plea": "Invisible suffering is still suffering. Let's make care accessible."},
+    {"id": "small_business", "name": "Small Business Recovery", "character": "Chamber President Hayes",
+     "is_correct": false, "plea": "Small businesses are the heart of our community. Help them recover."},
+    {"id": "asteroid", "name": "Asteroid Research Program", "character": "Dr. Eleanor Chen",
+     "is_correct": true, "plea": "I've been tracking something in the sky. We need funding. Urgent matters of science."}
+  ],
+
+  "game_params": {
+    "starting_money": 10,
+    "starting_fireworks": ["Sparkler"],
+    "starting_quantity": 3,
+    "total_nights": 100,
+    "retention_loss_rate": 0.02,
+    "walkup_random_factor_min": 0.8,
+    "walkup_random_factor_max": 1.2,
+    "finale_engagement_bonus": 0.20,
+    "zone_6_clear_threshold": 6000000000,
+    "donation_cost": 2500000000,
+    "asteroid_cause_name": "Asteroid Research Program",
+    "asteroid_funding_goal": 6000000000
+  }
+}
