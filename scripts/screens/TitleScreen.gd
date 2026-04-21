@@ -17,7 +17,7 @@ const AMBIENT_INTERVAL_MIN := 1.0
 const AMBIENT_INTERVAL_MAX := 5.0
 const AMBIENT_LEFT_X_MIN := 120.0
 const AMBIENT_LEFT_X_MAX := 560.0       # Keep bursts clear of the right column.
-const AMBIENT_GROUND_Y_OFFSET := 260.0  # Launch point ~260px above bottom edge.
+const AMBIENT_LAUNCH_Y := 620.0         # Ground position, matched to fg silhouette.
 const AMBIENT_CATALOG_LIMIT := 40       # First 40 catalog entries only.
 
 # Spec hero image — fallback chain if it isn't in the repo yet.
@@ -62,6 +62,7 @@ func _ready() -> void:
 
 	_build_background()
 	_build_ambient()
+	_build_foreground()
 	_build_right_column()
 	_build_bottom_bar()
 	_prime_and_animate_entrance()
@@ -76,20 +77,33 @@ func _build_background() -> void:
 			bg_path = p
 			break
 	if bg_path != "":
-		var tex := TextureRect.new()
-		tex.texture = load(bg_path)
-		tex.anchor_right = 1.0
-		tex.anchor_bottom = 1.0
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(tex)
+		add_child(_fill_texture(bg_path))
 	else:
 		var fill := ColorRect.new()
 		fill.color = Color(0.039, 0.055, 0.102)
 		fill.anchor_right = 1.0
 		fill.anchor_bottom = 1.0
 		add_child(fill)
+
+
+func _build_foreground() -> void:
+	# Same trick as Planning: silhouette layer sits in front of the
+	# ambient firework bursts but behind the UI, so the mountain +
+	# performer occlude the lower half of each burst.
+	var fg_path: String = "res://assets/backgrounds/zone6-foreground.png"
+	if ResourceLoader.exists(fg_path):
+		add_child(_fill_texture(fg_path))
+
+
+func _fill_texture(path: String) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = load(path)
+	t.anchor_right = 1.0
+	t.anchor_bottom = 1.0
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
 
 
 func _build_ambient() -> void:
@@ -129,8 +143,7 @@ func _fire_ambient_burst() -> void:
 		return
 	var fw: Dictionary = _ambient_catalog[randi() % _ambient_catalog.size()]
 	var x: float = randf_range(AMBIENT_LEFT_X_MIN, AMBIENT_LEFT_X_MAX)
-	var y: float = get_viewport_rect().size.y - AMBIENT_GROUND_Y_OFFSET
-	_ambient_field.call("launch", fw, Vector2(x, y))
+	_ambient_field.call("launch", fw, Vector2(x, AMBIENT_LAUNCH_Y))
 	_ambient_timer.wait_time = randf_range(AMBIENT_INTERVAL_MIN, AMBIENT_INTERVAL_MAX)
 	_ambient_timer.start()
 
@@ -179,9 +192,7 @@ func _build_title() -> Label:
 	var l := Label.new()
 	l.text = "The Last Show"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	# Bolder Cormorant: max axis weight (700) plus an embolden bump to
-	# synthesize a heavier stroke since the variable font's wght tops
-	# out at 700. Combined result reads as proper display-weight serif.
+	# Bolder Cormorant via variable font weight + synthetic embolden.
 	var fv := FontVariation.new()
 	fv.base_font = FONT_TITLE_VARIABLE
 	fv.variation_opentype = {"wght": 700}
@@ -189,13 +200,8 @@ func _build_title() -> Label:
 	l.add_theme_font_override("font", fv)
 	l.add_theme_font_size_override("font_size", 92)
 	l.add_theme_color_override("font_color", TEXT_PRIMARY)
-	# Soft amber bloom via Label's shadow slot: offset = 0, outline_size
-	# = 24 expands the shadow into a blur instead of the hard stroke
-	# `font_outline_color` was rendering.
-	l.add_theme_color_override("font_shadow_color", Color(1.0, 0.722, 0.302, 0.55))
-	l.add_theme_constant_override("shadow_offset_x", 0)
-	l.add_theme_constant_override("shadow_offset_y", 0)
-	l.add_theme_constant_override("shadow_outline_size", 24)
+	# No glow / outline — Godot Label can't render a real bloom, only
+	# hard strokes. Keeping the text clean reads better than a fake halo.
 	return l
 
 
