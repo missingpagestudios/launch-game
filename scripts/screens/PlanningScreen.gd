@@ -1,36 +1,51 @@
 extends Control
-## Three-panel planning screen. Text-only — labels, buttons, steppers.
+## Three-panel planning screen. Text-only UI on top of ZoneBackground.
+## Firework and upgrade rows are card-shaped (80px/88px) per the updated
+## spec in docs/stage_2_corrections.md.
 
-const BG := Color(0.04, 0.06, 0.16)
-const PANEL_BG := Color(0.07, 0.10, 0.22)
-const TEXT := Color(0.96, 0.90, 0.82)
-const MUTED := Color(0.54, 0.52, 0.44)
+const ZoneBackgroundScript := preload("res://scripts/components/ZoneBackground.gd")
+
+const PANEL_BG := Color(0.071, 0.094, 0.220, 0.92)    # #121838 @ 92%
+const CARD_AFFORDABLE := Color(0.102, 0.125, 0.282, 0.92) # #1A2048 @ 92%
+const CARD_UNAFFORDABLE := Color(0.071, 0.094, 0.220, 0.92)
+const CARD_SELECTED_BORDER := Color(1.0, 0.84, 0.0)   # gold
+const PANEL_BORDER := Color(0.165, 0.188, 0.333)     # #2A3055
+const DIVIDER := Color(0.165, 0.188, 0.333, 0.8)
+
+const TEXT := Color(0.960, 0.902, 0.816)
+const MUTED := Color(0.540, 0.521, 0.439)
 const GOLD := Color(1.0, 0.84, 0.0)
 const RED := Color(1.0, 0.35, 0.42)
-const AFFORDABLE := Color(0.10, 0.13, 0.28)
-const DISABLED := Color(0.04, 0.04, 0.10)
 
-var _fireworks_qty: Dictionary = {}  # name -> int
-var _marketing_qty: Dictionary = {}  # name -> int
-var _enhancements: Dictionary = {}   # category -> name
+# Stage-2-appropriate tier badge tint (small colored squares per tier).
+const TIER_COLORS := {
+	1: Color(0.55, 0.60, 0.70),
+	2: Color(0.55, 0.80, 0.55),
+	3: Color(0.85, 0.55, 0.75),
+	4: Color(1.00, 0.84, 0.00),
+}
+
+const UPGRADE_CATEGORIES := ["All", "crew", "infrastructure", "revenue", "marketing"]
+
+var _fireworks_qty: Dictionary = {}      # name -> int
+var _marketing_qty: Dictionary = {}      # name -> int
+var _enhancements: Dictionary = {}       # category -> name
 var _upgrade_buys: Array[String] = []
 
 var _total_spend_label: Label
 var _cash_label: Label
 var _fans_label: Label
-var _fire_show_button: Button
+var _run_show_button: Button
 var _summary_label: Label
+var _upgrade_category_filter: String = "All"
 
-var _firework_rows: Array = []
-var _marketing_rows: Array = []
-var _upgrade_rows: Array = []
+var _firework_rows: Array = []           # {fw, row, cost_label, qty_label}
+var _upgrade_body: VBoxContainer
 
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = BG
-	bg.anchor_right = 1.0
-	bg.anchor_bottom = 1.0
+	var bg: Control = ZoneBackgroundScript.new()
+	bg.zone_id = GameState.current_zone
 	add_child(bg)
 
 	var root := VBoxContainer.new()
@@ -50,33 +65,48 @@ func _ready() -> void:
 
 func _build_top_bar() -> Control:
 	var bar := PanelContainer.new()
-	bar.custom_minimum_size = Vector2(0, 64)
-	bar.add_theme_stylebox_override("panel", _stylebox(PANEL_BG))
+	bar.custom_minimum_size = Vector2(0, 80)
+	bar.add_theme_stylebox_override("panel", _panel_style(PANEL_BG))
+
+	var outer_margin := MarginContainer.new()
+	outer_margin.add_theme_constant_override("margin_left", 32)
+	outer_margin.add_theme_constant_override("margin_right", 32)
+	outer_margin.add_theme_constant_override("margin_top", 8)
+	outer_margin.add_theme_constant_override("margin_bottom", 8)
+	bar.add_child(outer_margin)
 
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 40)
+	h.add_theme_constant_override("separation", 32)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
-	bar.add_child(h)
+	outer_margin.add_child(h)
 
-	var m := MarginContainer.new()
-	m.add_theme_constant_override("margin_left", 32)
-	m.add_theme_constant_override("margin_right", 32)
-	m.add_theme_constant_override("margin_top", 8)
-	m.add_theme_constant_override("margin_bottom", 8)
-	m.add_child(h)
-	bar.add_child(m)
+	var total_nights: int = int(BalanceConfig.game_params().get("total_nights", 100))
+	var zone_name: String = String(BalanceConfig.get_zone(GameState.current_zone).get("name", ""))
 
-	var nights := _label("Night %d / %d" % [GameState.night, int(BalanceConfig.game_params().get("total_nights", 100))], 24, TEXT)
-	h.add_child(nights)
+	h.add_child(_label_sized("Night %d / %d" % [GameState.night, total_nights], 32, TEXT))
 
-	var zone := _label("Zone %d: %s" % [GameState.current_zone, String(BalanceConfig.get_zone(GameState.current_zone).get("name", ""))], 24, TEXT)
-	h.add_child(zone)
+	var zone_wrap := VBoxContainer.new()
+	zone_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	zone_wrap.alignment = BoxContainer.ALIGNMENT_CENTER
+	var zone_title := _label_sized("Zone %d: %s" % [GameState.current_zone, zone_name], 32, TEXT)
+	zone_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	zone_wrap.add_child(zone_title)
+	h.add_child(zone_wrap)
 
-	_cash_label = _label("Cash: $%s" % _fmt_dollars(GameState.money), 24, GOLD)
-	h.add_child(_cash_label)
+	# Right cluster: cash 32px gold, fans 16px muted, stacked vertically.
+	var right := VBoxContainer.new()
+	right.alignment = BoxContainer.ALIGNMENT_CENTER
+	right.custom_minimum_size = Vector2(220, 0)
+	_cash_label = _label_sized("$%s" % _fmt_num(int(GameState.money)), 32, GOLD)
+	_cash_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cash_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_child(_cash_label)
+	_fans_label = _label_sized("Fans: %s" % _fmt_num(GameState.repeat_fans), 16, MUTED)
+	_fans_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_fans_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_child(_fans_label)
+	h.add_child(right)
 
-	_fans_label = _label("Fans: %s" % _fmt_num(GameState.repeat_fans), 20, MUTED)
-	h.add_child(_fans_label)
 	return bar
 
 
@@ -86,10 +116,10 @@ func _build_panels() -> Control:
 	var h := HBoxContainer.new()
 	h.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	h.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	h.add_theme_constant_override("separation", 8)
+	h.add_theme_constant_override("separation", 16)
 	h.add_child(_panel("FIREWORKS", _build_fireworks_list()))
 	h.add_child(_panel("MARKETING / ENHANCEMENTS", _build_marketing_and_enhancements()))
-	h.add_child(_panel("UPGRADES", _build_upgrades_list()))
+	h.add_child(_panel("UPGRADES", _build_upgrades_panel_body()))
 	return h
 
 
@@ -97,108 +127,162 @@ func _panel(title: String, body: Control) -> Control:
 	var wrap := PanelContainer.new()
 	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	wrap.add_theme_stylebox_override("panel", _stylebox(PANEL_BG))
+	wrap.add_theme_stylebox_override("panel", _panel_style(PANEL_BG))
+
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 16)
+	pad.add_theme_constant_override("margin_right", 16)
+	pad.add_theme_constant_override("margin_top", 12)
+	pad.add_theme_constant_override("margin_bottom", 12)
+	wrap.add_child(pad)
 
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
-	var m := MarginContainer.new()
-	m.add_theme_constant_override("margin_left", 16)
-	m.add_theme_constant_override("margin_right", 16)
-	m.add_theme_constant_override("margin_top", 12)
-	m.add_theme_constant_override("margin_bottom", 12)
-	m.add_child(v)
-	wrap.add_child(m)
+	pad.add_child(v)
 
-	var header := _label(title, 22, TEXT)
-	v.add_child(header)
-
+	v.add_child(_label_sized(title, 32, TEXT))
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(body)
 	return wrap
 
 
+# --- firework cards -----------------------------------------------------------
+
 func _build_fireworks_list() -> Control:
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 6)
 	scroll.add_child(v)
 
-	var fireworks_sorted := GameEngine.available_fireworks().duplicate()
+	var fireworks_sorted: Array = GameEngine.available_fireworks().duplicate()
 	fireworks_sorted.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.get("tier", 1)) != int(b.get("tier", 1)):
 			return int(a.get("tier", 1)) < int(b.get("tier", 1))
-		return String(a.name) < String(b.name))
+		return int(a.get("cost", 0)) < int(b.get("cost", 0)))
 	for fw in fireworks_sorted:
-		var row := _build_firework_row(fw)
-		v.add_child(row)
-		_firework_rows.append({"fw": fw, "row": row})
+		v.add_child(_build_firework_card(fw))
 	return scroll
 
 
-func _build_firework_row(fw: Dictionary) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+func _build_firework_card(fw: Dictionary) -> Control:
+	var cost: int = int(fw.get("cost", 0))
+	var affordable: bool = float(cost) <= GameState.money
+	var wrap := PanelContainer.new()
+	wrap.custom_minimum_size = Vector2(0, 80)
+	var style := _card_style(CARD_AFFORDABLE if affordable else CARD_UNAFFORDABLE)
+	wrap.add_theme_stylebox_override("panel", style)
 
-	var name_label := _label("[T%d] %s — $%s, eng %d" % [
-		int(fw.get("tier", 1)),
-		String(fw.name),
-		_fmt_num(int(fw.get("cost", 0))),
-		int(fw.get("engagement", 0))],
-		16, TEXT)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(name_label)
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	wrap.add_child(pad)
 
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	pad.add_child(v)
+
+	# Row 1: name + tier badge
+	var row_name := HBoxContainer.new()
+	row_name.add_theme_constant_override("separation", 8)
+	var name_lbl: Label = _label_sized(String(fw.name), 16, TEXT if affordable else MUTED)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row_name.add_child(name_lbl)
+	row_name.add_child(_tier_badge(int(fw.get("tier", 1))))
+	v.add_child(row_name)
+
+	# Row 2: stats + tags combined (cost · engagement · tags)
+	var tags: Array = fw.get("tags", [])
+	var stats_line: String = "$%s · %d eng" % [_fmt_num(cost), int(fw.get("engagement", 0))]
+	if not tags.is_empty():
+		stats_line += " · " + ", ".join(tags)
+	var stats_lbl: Label = _label_sized(stats_line, 16, MUTED)
+	v.add_child(stats_lbl)
+
+	# Row 3: qty controls left, cost preview right
+	var row_ctrl := HBoxContainer.new()
+	row_ctrl.add_theme_constant_override("separation", 6)
 	var minus := _small_button("-")
-	var qty_label := _label("0", 16, GOLD)
-	qty_label.custom_minimum_size = Vector2(36, 0)
-	qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var qty_lbl := _label_sized("0", 16, GOLD)
+	qty_lbl.custom_minimum_size = Vector2(36, 0)
+	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _small_button("+")
+	row_ctrl.add_child(minus)
+	row_ctrl.add_child(qty_lbl)
+	row_ctrl.add_child(plus)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row_ctrl.add_child(spacer)
+	var cost_preview := _label_sized("", 16, GOLD)
+	cost_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row_ctrl.add_child(cost_preview)
+	v.add_child(row_ctrl)
 
-	minus.pressed.connect(func() -> void: _nudge_firework(fw, -1, qty_label))
-	plus.pressed.connect(func() -> void: _nudge_firework(fw, 1, qty_label))
-	row.add_child(minus)
-	row.add_child(qty_label)
-	row.add_child(plus)
-	return row
+	var entry := {
+		"fw": fw,
+		"wrap": wrap,
+		"style": style,
+		"qty_label": qty_lbl,
+		"cost_preview": cost_preview,
+	}
+	_firework_rows.append(entry)
+	minus.pressed.connect(func() -> void: _nudge_firework(fw, -1, entry))
+	plus.pressed.connect(func() -> void: _nudge_firework(fw, 1, entry))
+	return wrap
 
+
+func _tier_badge(tier: int) -> Control:
+	var c := ColorRect.new()
+	c.color = TIER_COLORS.get(tier, TIER_COLORS[1])
+	c.custom_minimum_size = Vector2(20, 20)
+	var wrap := PanelContainer.new()
+	wrap.custom_minimum_size = Vector2(48, 20)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 6)
+	h.add_child(c)
+	h.add_child(_label_sized("T%d" % tier, 16, TEXT))
+	wrap.add_child(h)
+	return wrap
+
+
+# --- marketing + enhancements -------------------------------------------------
 
 func _build_marketing_and_enhancements() -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 12)
 
-	# Marketing
-	var mk_header := _label("Marketing", 18, TEXT)
-	v.add_child(mk_header)
+	v.add_child(_label_sized("Marketing", 16, MUTED))
 	var mk_scroll := ScrollContainer.new()
 	mk_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	mk_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var mk_v := VBoxContainer.new()
 	mk_v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mk_v.add_theme_constant_override("separation", 4)
 	mk_scroll.add_child(mk_v)
 	v.add_child(mk_scroll)
 
 	for mk in GameEngine.available_marketing():
-		var row := _build_marketing_row(mk)
-		mk_v.add_child(row)
-		_marketing_rows.append({"mk": mk, "row": row})
+		mk_v.add_child(_build_marketing_row(mk))
 
-	# Enhancements (one pick per category)
-	v.add_child(_label("Enhancements (one per category)", 18, TEXT))
+	v.add_child(_divider())
+	v.add_child(_label_sized("Enhancements — one per category", 16, MUTED))
+
 	var eh_scroll := ScrollContainer.new()
 	eh_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	eh_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var eh_v := VBoxContainer.new()
 	eh_v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	eh_v.add_theme_constant_override("separation", 4)
+	eh_v.add_theme_constant_override("separation", 6)
 	eh_scroll.add_child(eh_v)
 	v.add_child(eh_scroll)
 
-	var groups := GameEngine.available_enhancements()
+	var groups: Dictionary = GameEngine.available_enhancements()
 	for category in groups.keys():
-		eh_v.add_child(_label(String(category).capitalize(), 16, MUTED))
+		eh_v.add_child(_label_sized(String(category).capitalize(), 16, TEXT))
 		var group_container := VBoxContainer.new()
 		eh_v.add_child(group_container)
 
@@ -207,8 +291,9 @@ func _build_marketing_and_enhancements() -> Control:
 		none_btn.button_pressed = true
 		group_container.add_child(none_btn)
 		var buttons: Array[CheckBox] = [none_btn]
+		var cat_str: String = String(category)
 		none_btn.pressed.connect(func() -> void:
-			_select_enhancement(String(category), "", buttons, none_btn))
+			_select_enhancement(cat_str, "", buttons, none_btn))
 
 		for eh in groups[category]:
 			var eh_dict: Dictionary = eh
@@ -221,9 +306,8 @@ func _build_marketing_and_enhancements() -> Control:
 			group_container.add_child(cb)
 			buttons.append(cb)
 			var eh_name: String = String(eh_dict.name)
-			var cat_name: String = String(category)
 			cb.pressed.connect(func() -> void:
-				_select_enhancement(cat_name, eh_name, buttons, cb))
+				_select_enhancement(cat_str, eh_name, buttons, cb))
 
 	return v
 
@@ -232,21 +316,19 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 
-	var label := _label("%s — $%s, +%s attendees  (cap %d)" % [
+	var label := _label_sized("%s — $%s, +%s attendees  (cap %d)" % [
 		String(mk.name),
 		_fmt_num(int(mk.get("cost", 0))),
 		_fmt_num(int(mk.get("attendees", 0))),
-		int(mk.get("cap", 0))],
-		16, TEXT)
+		int(mk.get("cap", 0))], 16, TEXT)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 
 	var minus := _small_button("-")
-	var qty_label := _label("0", 16, GOLD)
+	var qty_label := _label_sized("0", 16, GOLD)
 	qty_label.custom_minimum_size = Vector2(36, 0)
 	qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _small_button("+")
-
 	minus.pressed.connect(func() -> void: _nudge_marketing(mk, -1, qty_label))
 	plus.pressed.connect(func() -> void: _nudge_marketing(mk, 1, qty_label))
 	row.add_child(minus)
@@ -255,59 +337,202 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 	return row
 
 
-func _build_upgrades_list() -> Control:
+# --- upgrades panel -----------------------------------------------------------
+
+func _build_upgrades_panel_body() -> Control:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 4)
+	var category_group: Array[Button] = []
+	for cat in UPGRADE_CATEGORIES:
+		var b := Button.new()
+		b.text = String(cat).capitalize()
+		b.toggle_mode = true
+		b.button_pressed = (cat == "All")
+		b.custom_minimum_size = Vector2(0, 28)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var cat_str: String = cat
+		b.pressed.connect(func() -> void:
+			_upgrade_category_filter = cat_str
+			for btn in category_group:
+				btn.button_pressed = btn == b
+			_rebuild_upgrades())
+		category_group.append(b)
+		tabs.add_child(b)
+	v.add_child(tabs)
+
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	var v := VBoxContainer.new()
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_theme_constant_override("separation", 2)
-	scroll.add_child(v)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_upgrade_body = VBoxContainer.new()
+	_upgrade_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_upgrade_body.add_theme_constant_override("separation", 6)
+	scroll.add_child(_upgrade_body)
+	v.add_child(scroll)
+	_rebuild_upgrades()
+	return v
 
-	# Owned first (muted)
+
+func _rebuild_upgrades() -> void:
+	for child in _upgrade_body.get_children():
+		child.queue_free()
+
+	var cat_match := func(up: Dictionary) -> bool:
+		if _upgrade_category_filter == "All":
+			return true
+		return String(up.get("category", "")) == _upgrade_category_filter
+
+	var owned: Array = []
 	for up_name in GameState.owned_upgrades:
-		v.add_child(_label("[OWNED] %s" % up_name, 16, MUTED))
+		var up: Dictionary = BalanceConfig.get_upgrade(up_name)
+		if cat_match.call(up):
+			owned.append(up)
 
-	for up in GameEngine.available_upgrades():
-		var row := _build_upgrade_row(up)
-		v.add_child(row)
-		_upgrade_rows.append({"up": up, "row": row})
-
-	# Locked preview (not yet in current zone)
+	var available: Array = []
+	var locked: Array = []
 	for up in BalanceConfig.upgrades():
-		if GameState.owned_upgrades.has(String(up.name)):
+		var up_dict: Dictionary = up
+		if GameState.owned_upgrades.has(String(up_dict.name)):
 			continue
-		if GameState.current_zone < int(up.get("min_zone", 1)):
-			v.add_child(_label("(locked) %s — unlocks at Zone %d" % [String(up.name), int(up.get("min_zone", 1))], 14, MUTED))
-	return scroll
+		if not cat_match.call(up_dict):
+			continue
+		if GameState.current_zone < int(up_dict.get("min_zone", 1)):
+			locked.append(up_dict)
+		else:
+			available.append(up_dict)
+
+	_upgrade_body.add_child(_section_header("OWNED"))
+	if owned.is_empty():
+		_upgrade_body.add_child(_label_sized("  (none)", 16, MUTED))
+	for up in owned:
+		_upgrade_body.add_child(_owned_row(up))
+
+	_upgrade_body.add_child(_section_header("AVAILABLE"))
+	if available.is_empty():
+		_upgrade_body.add_child(_label_sized("  (nothing purchasable this zone)", 16, MUTED))
+	for up in available:
+		_upgrade_body.add_child(_upgrade_card(up))
+
+	_upgrade_body.add_child(_section_header("LOCKED"))
+	if locked.is_empty():
+		_upgrade_body.add_child(_label_sized("  (everything unlocked)", 16, MUTED))
+	for up in locked:
+		_upgrade_body.add_child(_locked_row(up))
 
 
-func _build_upgrade_row(up: Dictionary) -> Control:
+func _section_header(text: String) -> Control:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	v.add_child(_divider())
+	v.add_child(_label_sized(text, 16, MUTED))
+	v.add_child(_divider())
+	return v
+
+
+func _owned_row(up: Dictionary) -> Control:
 	var row := HBoxContainer.new()
+	row.custom_minimum_size = Vector2(0, 44)
 	row.add_theme_constant_override("separation", 8)
-	var desc := "%s — $%s  (%s)" % [
-		String(up.name),
-		_fmt_num(int(up.get("cost", 0))),
-		String(up.get("category", ""))]
-	var label := _label(desc, 16, TEXT)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(label)
+	row.add_child(_label_sized("  ✓ %s" % String(up.name), 16, MUTED))
+	return row
 
-	var buy_btn := _small_button("Buy")
-	buy_btn.custom_minimum_size = Vector2(60, 30)
+
+func _locked_row(up: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size = Vector2(0, 44)
+	row.add_theme_constant_override("separation", 8)
+	var msg: String = "  🔒 %s" % String(up.name)
+	var left := _label_sized(msg, 16, MUTED)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(left)
+	row.add_child(_label_sized("Zone %d+" % int(up.get("min_zone", 1)), 16, MUTED))
+	return row
+
+
+func _upgrade_card(up: Dictionary) -> Control:
+	var cost: int = int(up.get("cost", 0))
+	var affordable: bool = float(cost) <= GameState.money
+	var wrap := PanelContainer.new()
+	wrap.custom_minimum_size = Vector2(0, 88)
+	var style := _card_style(CARD_AFFORDABLE if affordable else CARD_UNAFFORDABLE)
+	wrap.add_theme_stylebox_override("panel", style)
+
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	wrap.add_child(pad)
+
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	pad.add_child(v)
+
+	# Row 1: name + category tag
+	var row_name := HBoxContainer.new()
+	row_name.add_theme_constant_override("separation", 8)
+	var name_lbl: Label = _label_sized(String(up.name), 16, TEXT if affordable else MUTED)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row_name.add_child(name_lbl)
+	row_name.add_child(_label_sized("[%s]" % String(up.get("category", "")), 16, MUTED))
+	v.add_child(row_name)
+
+	# Row 2: cost
+	v.add_child(_label_sized("$%s" % _fmt_num(cost), 16, GOLD if affordable else MUTED))
+
+	# Row 3: effect + buy
+	var row_end := HBoxContainer.new()
+	row_end.add_theme_constant_override("separation", 8)
+	var effect_text: String = _effect_summary(up.get("effect", {}))
+	var effect_lbl := _label_sized(effect_text, 16, TEXT if affordable else MUTED)
+	effect_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row_end.add_child(effect_lbl)
+	var buy_btn := Button.new()
+	buy_btn.text = "Buy"
+	buy_btn.custom_minimum_size = Vector2(72, 32)
+	buy_btn.disabled = not affordable
+	var name_str: String = String(up.name)
+	if _upgrade_buys.has(name_str):
+		buy_btn.text = "Undo"
 	buy_btn.pressed.connect(func() -> void:
-		var name_str := String(up.name)
 		if _upgrade_buys.has(name_str):
 			_upgrade_buys.erase(name_str)
-			buy_btn.text = "Buy"
-			label.remove_theme_color_override("font_color")
-			label.add_theme_color_override("font_color", TEXT)
 		else:
 			_upgrade_buys.append(name_str)
-			buy_btn.text = "Undo"
-			label.add_theme_color_override("font_color", GOLD)
+		_rebuild_upgrades()
 		_refresh_totals())
-	row.add_child(buy_btn)
-	return row
+	row_end.add_child(buy_btn)
+	v.add_child(row_end)
+
+	if _upgrade_buys.has(name_str):
+		var sel_style := _card_style(CARD_AFFORDABLE)
+		sel_style.border_color = CARD_SELECTED_BORDER
+		sel_style.border_width_left = 1
+		sel_style.border_width_right = 1
+		sel_style.border_width_top = 1
+		sel_style.border_width_bottom = 1
+		wrap.add_theme_stylebox_override("panel", sel_style)
+
+	return wrap
+
+
+func _effect_summary(effect: Dictionary) -> String:
+	var parts: Array[String] = []
+	if effect.has("attendees_permanent"):
+		parts.append("+%s attendees perm" % _fmt_num(int(effect.attendees_permanent)))
+	if effect.has("tip_mult_permanent"):
+		parts.append("+%d%% tips perm" % int(float(effect.tip_mult_permanent) * 100))
+	if effect.has("eng_mult_permanent"):
+		parts.append("+%d%% eng perm" % int(float(effect.eng_mult_permanent) * 100))
+	if effect.has("show_quality_mult"):
+		parts.append("+%d%% show quality" % int(float(effect.show_quality_mult) * 100))
+	if effect.has("unlocks_donation") or effect.has("unlocks_zone_6_finale") or effect.has("unlocks_tier_4_research"):
+		parts.append("unlocks endgame content")
+	if parts.is_empty():
+		return ""
+	return ", ".join(parts)
 
 
 # --- bottom bar ---------------------------------------------------------------
@@ -315,7 +540,7 @@ func _build_upgrade_row(up: Dictionary) -> Control:
 func _build_bottom_bar() -> Control:
 	var bar := PanelContainer.new()
 	bar.custom_minimum_size = Vector2(0, 80)
-	bar.add_theme_stylebox_override("panel", _stylebox(PANEL_BG))
+	bar.add_theme_stylebox_override("panel", _panel_style(PANEL_BG))
 
 	var m := MarginContainer.new()
 	m.add_theme_constant_override("margin_left", 24)
@@ -329,33 +554,53 @@ func _build_bottom_bar() -> Control:
 	h.add_theme_constant_override("separation", 24)
 	m.add_child(h)
 
-	_summary_label = _label("0 fireworks selected", 16, MUTED)
+	_summary_label = _label_sized("Select at least one firework to run a show.", 16, MUTED)
 	_summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(_summary_label)
 
-	_total_spend_label = _label("Spend: $0", 20, GOLD)
+	_total_spend_label = _label_sized("Spend: $0", 32, GOLD)
 	h.add_child(_total_spend_label)
 
-	_fire_show_button = Button.new()
-	_fire_show_button.text = "Fire Show →"
-	_fire_show_button.add_theme_font_size_override("font_size", 22)
-	_fire_show_button.custom_minimum_size = Vector2(200, 48)
-	_fire_show_button.pressed.connect(_on_fire_show_pressed)
-	h.add_child(_fire_show_button)
+	_run_show_button = Button.new()
+	_run_show_button.text = "▶ Run Show"
+	_run_show_button.custom_minimum_size = Vector2(200, 48)
+	_run_show_button.pressed.connect(_on_run_show_pressed)
+	h.add_child(_run_show_button)
 	return bar
 
 
-# --- stepper handlers ---------------------------------------------------------
+# --- handlers -----------------------------------------------------------------
 
-func _nudge_firework(fw: Dictionary, delta: int, qty_label: Label) -> void:
+func _nudge_firework(fw: Dictionary, delta: int, entry: Dictionary) -> void:
 	var name_str: String = String(fw.name)
 	var current: int = int(_fireworks_qty.get(name_str, 0))
 	var cap: int = int(BalanceConfig.get_zone(GameState.current_zone).get("firework_cap", 300))
 	var new_qty: int = maxi(current + delta, 0)
 	new_qty = mini(new_qty, cap)
 	_fireworks_qty[name_str] = new_qty
-	qty_label.text = str(new_qty)
+	(entry.qty_label as Label).text = str(new_qty)
+	var cost_preview_lbl: Label = entry.cost_preview
+	if new_qty > 0:
+		cost_preview_lbl.text = "$%s" % _fmt_num(new_qty * int(fw.get("cost", 0)))
+	else:
+		cost_preview_lbl.text = ""
+	_apply_selected_border(entry, new_qty > 0)
 	_refresh_totals()
+
+
+func _apply_selected_border(entry: Dictionary, selected: bool) -> void:
+	var style: StyleBoxFlat = entry.style
+	if selected:
+		style.border_color = CARD_SELECTED_BORDER
+		style.border_width_left = 1
+		style.border_width_right = 1
+		style.border_width_top = 1
+		style.border_width_bottom = 1
+	else:
+		style.border_width_left = 0
+		style.border_width_right = 0
+		style.border_width_top = 0
+		style.border_width_bottom = 0
 
 
 func _nudge_marketing(mk: Dictionary, delta: int, qty_label: Label) -> void:
@@ -380,55 +625,54 @@ func _select_enhancement(category: String, name: String, buttons: Array[CheckBox
 	_refresh_totals()
 
 
-# --- totals & fire show -------------------------------------------------------
+# --- totals + run show --------------------------------------------------------
 
 func _refresh_totals() -> void:
-	var spend := 0.0
-	var fw_count := 0
+	var spend: float = 0.0
+	var fw_count: int = 0
 	for name_str in _fireworks_qty.keys():
-		var qty := int(_fireworks_qty[name_str])
+		var qty: int = int(_fireworks_qty[name_str])
 		if qty <= 0:
 			continue
 		spend += float(BalanceConfig.get_firework(name_str).get("cost", 0)) * qty
 		fw_count += qty
 	for name_str in _marketing_qty.keys():
-		var qty := int(_marketing_qty[name_str])
+		var qty: int = int(_marketing_qty[name_str])
 		if qty <= 0:
 			continue
 		spend += float(BalanceConfig.get_marketing(name_str).get("cost", 0)) * qty
 	for category in _enhancements.keys():
-		var eh := BalanceConfig.get_enhancement(String(category), String(_enhancements[category]))
+		var eh: Dictionary = BalanceConfig.get_enhancement(String(category), String(_enhancements[category]))
 		spend += float(eh.get("cost", 0))
 	for up_name in _upgrade_buys:
 		spend += float(BalanceConfig.get_upgrade(up_name).get("cost", 0))
 
-	_total_spend_label.text = "Spend: $%s / Cash: $%s" % [_fmt_dollars(spend), _fmt_dollars(GameState.money)]
+	_total_spend_label.text = "Spend: $%s / Cash: $%s" % [_fmt_num(int(spend)), _fmt_num(int(GameState.money))]
 	_total_spend_label.add_theme_color_override("font_color", RED if spend > GameState.money else GOLD)
-	_summary_label.text = "%d fireworks selected, %d marketing, %d enhancements, %d upgrades" % [
-		fw_count,
-		_marketing_total(),
-		_enhancements.size(),
-		_upgrade_buys.size(),
-	]
-
-	_fire_show_button.disabled = (spend > GameState.money) or (fw_count <= 0)
+	if fw_count <= 0:
+		_summary_label.text = "Select at least one firework to run a show."
+	else:
+		_summary_label.text = "%d fireworks · %d marketing · %d enhancements · %d upgrades" % [
+			fw_count, _marketing_total(), _enhancements.size(), _upgrade_buys.size(),
+		]
+	_run_show_button.disabled = (spend > GameState.money) or (fw_count <= 0)
 
 
 func _marketing_total() -> int:
-	var t := 0
+	var t: int = 0
 	for v in _marketing_qty.values():
 		t += int(v)
 	return t
 
 
-func _on_fire_show_pressed() -> void:
+func _on_run_show_pressed() -> void:
 	var decisions := {
 		"fireworks": _fireworks_qty,
 		"marketing": _marketing_qty,
 		"enhancements": _enhancements_as_array(),
 		"upgrades_to_buy": _upgrade_buys,
 	}
-	var result := GameEngine.resolve_night(decisions)
+	var result: Dictionary = GameEngine.resolve_night(decisions)
 	Router.commit_night(result)
 
 
@@ -439,12 +683,13 @@ func _enhancements_as_array() -> Array:
 	return out
 
 
-# --- helpers ------------------------------------------------------------------
+# --- primitives ---------------------------------------------------------------
 
-func _label(text: String, font_size: int, color: Color) -> Label:
+func _label_sized(text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", font_size)
+	if font_size != 16:
+		l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	return l
 
@@ -452,11 +697,29 @@ func _label(text: String, font_size: int, color: Color) -> Label:
 func _small_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(32, 28)
+	b.custom_minimum_size = Vector2(32, 32)
 	return b
 
 
-func _stylebox(color: Color) -> StyleBoxFlat:
+func _divider() -> Control:
+	var c := ColorRect.new()
+	c.color = DIVIDER
+	c.custom_minimum_size = Vector2(0, 1)
+	return c
+
+
+func _panel_style(color: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = color
+	sb.border_color = PANEL_BORDER
+	sb.border_width_left = 1
+	sb.border_width_right = 1
+	sb.border_width_top = 1
+	sb.border_width_bottom = 1
+	return sb
+
+
+func _card_style(color: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = color
 	sb.border_width_left = 0
@@ -464,10 +727,6 @@ func _stylebox(color: Color) -> StyleBoxFlat:
 	sb.border_width_top = 0
 	sb.border_width_bottom = 0
 	return sb
-
-
-func _fmt_dollars(n) -> String:
-	return _fmt_num(int(n))
 
 
 func _fmt_num(n: int) -> String:

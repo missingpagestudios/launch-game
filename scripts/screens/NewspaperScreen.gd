@@ -57,7 +57,7 @@ func _ready() -> void:
 	paper_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(paper_name)
 
-	var date := _label(String(article.date_line), 14, MUTED)
+	var date := _label(String(article.date_line), 16, MUTED)
 	date.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(date)
 
@@ -73,7 +73,7 @@ func _ready() -> void:
 	main.add_theme_constant_override("separation", 12)
 	columns.add_child(main)
 
-	var headline := _label(String(article.headline), 28, TEXT)
+	var headline := _label(String(article.headline), 32, TEXT)
 	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	main.add_child(headline)
 
@@ -88,8 +88,8 @@ func _ready() -> void:
 	var cause: String = String(article.get("cause_mention", ""))
 	if cause != "":
 		main.add_child(_spacer(8))
-		main.add_child(_label("— SECONDARY NOTICE —", 14, MUTED))
-		var cause_lbl := _label(cause, 15, TEXT)
+		main.add_child(_label("— SECONDARY NOTICE —", 16, MUTED))
+		var cause_lbl := _label(cause, 16, TEXT)
 		cause_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		main.add_child(cause_lbl)
 
@@ -100,17 +100,16 @@ func _ready() -> void:
 		sub.custom_minimum_size = Vector2(280, 0)
 		sub.add_theme_constant_override("separation", 6)
 		columns.add_child(sub)
-		sub.add_child(_label("NIGHT SKY COLUMN", 14, MUTED))
-		var line := _label(meteor, 14, TEXT)
+		sub.add_child(_label("NIGHT SKY COLUMN", 16, MUTED))
+		var line := _label(meteor, 16, TEXT)
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		sub.add_child(line)
-		sub.add_child(_label("— E. Chen, observatory", 12, MUTED))
+		sub.add_child(_label("— E. Chen, observatory", 16, MUTED))
 
 	v.add_child(_spacer(12))
 
 	var cont := Button.new()
 	cont.text = "Continue to Planning →"
-	cont.add_theme_font_size_override("font_size", 20)
 	cont.custom_minimum_size = Vector2(260, 44)
 	cont.pressed.connect(func() -> void: Router.after_newspaper())
 	var btn_wrap := HBoxContainer.new()

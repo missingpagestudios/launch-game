@@ -33,11 +33,11 @@ func _ready() -> void:
 	var r := GameState.last_night_results
 	var zone_name := String(BalanceConfig.get_zone(int(r.get("resolved_at_zone", GameState.current_zone))).get("name", ""))
 
-	var title := _label("YOUR SHOW IN %s" % zone_name.to_upper(), 36, TEXT)
+	var title := _label("YOUR SHOW IN %s" % zone_name.to_upper(), 32, TEXT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
 
-	var sub := _label("Night %d" % int(r.get("resolved_at_night", GameState.night - 1)), 20, MUTED)
+	var sub := _label("Night %d" % int(r.get("resolved_at_night", GameState.night - 1)), 16, MUTED)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sub)
 
@@ -63,23 +63,22 @@ func _ready() -> void:
 	var syns: Array = r.get("synergies_triggered", [])
 	if not syns.is_empty():
 		v.add_child(_spacer(8))
-		v.add_child(_label("Synergies: %s" % ", ".join(syns), 18, GOLD))
+		v.add_child(_label("Synergies: %s" % ", ".join(syns), 16, GOLD))
 
 	var unlocks: Array = r.get("unlocks_earned", [])
 	if not unlocks.is_empty():
-		v.add_child(_label("NEW FIREWORK UNLOCKED: %s" % ", ".join(unlocks), 18, GOLD))
+		v.add_child(_label("NEW FIREWORK UNLOCKED: %s" % ", ".join(unlocks), 16, GOLD))
 
 	if bool(r.get("zone_advanced", false)):
-		v.add_child(_label("ZONE CLEARED — now in %s" % String(BalanceConfig.get_zone(GameState.current_zone).get("name", "")), 20, GOLD))
+		v.add_child(_label("ZONE CLEARED — now in %s" % String(BalanceConfig.get_zone(GameState.current_zone).get("name", "")), 32, GOLD))
 
 	if bool(r.get("zone_6_clear_triggered", false)):
-		v.add_child(_label("A letter arrives. Eight requests are waiting at your office.", 18, GOLD))
+		v.add_child(_label("A letter arrives. Eight requests are waiting at your office.", 16, GOLD))
 
 	v.add_child(_spacer(24))
 
 	var cont := Button.new()
 	cont.text = "Continue →"
-	cont.add_theme_font_size_override("font_size", 24)
 	cont.custom_minimum_size = Vector2(220, 48)
 	cont.pressed.connect(func() -> void: Router.after_show())
 	v.add_child(cont)
@@ -88,10 +87,10 @@ func _ready() -> void:
 func _stat_row(label: String, value: String, color: Color) -> Control:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 24)
-	var l := _label(label, 18, MUTED)
+	var l := _label(label, 16, MUTED)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(l)
-	h.add_child(_label(value, 18, color))
+	h.add_child(_label(value, 16, color))
 	return h
 
 

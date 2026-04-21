@@ -36,15 +36,14 @@ func _ready() -> void:
 	margin.add_child(v)
 
 	var title := Label.new()
-	title.text = "LAUNCH"
-	title.add_theme_font_size_override("font_size", 96)
+	title.text = "THE LAST SHOW"
+	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", ACCENT_TEXT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "a 100-night fireworks career"
-	subtitle.add_theme_font_size_override("font_size", 20)
+	subtitle.text = "a game about fireworks"
 	subtitle.add_theme_color_override("font_color", MUTED)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(subtitle)
@@ -67,7 +66,6 @@ func _ready() -> void:
 
 	var meta := Label.new()
 	meta.text = _meta_summary()
-	meta.add_theme_font_size_override("font_size", 16)
 	meta.add_theme_color_override("font_color", MUTED)
 	meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	meta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -77,8 +75,7 @@ func _ready() -> void:
 func _menu_button(label: String) -> Button:
 	var b := Button.new()
 	b.text = label
-	b.add_theme_font_size_override("font_size", 24)
-	b.custom_minimum_size = Vector2(360, 56)
+	b.custom_minimum_size = Vector2(360, 48)
 	b.focus_mode = Control.FOCUS_ALL
 	return b
 
@@ -141,7 +138,6 @@ func _on_debug_autorun_pressed() -> void:
 		label = Label.new()
 		label.name = "DebugStatus"
 		label.text = "Debug auto-run complete — see stdout."
-		label.add_theme_font_size_override("font_size", 16)
 		label.add_theme_color_override("font_color", GOLD)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		add_child(label)

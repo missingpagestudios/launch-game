@@ -36,14 +36,14 @@ func _ready() -> void:
 	var body_text := _body_for(ending)
 	var signal_pct := _signal_integrity(ending)
 
-	var header := _label(header_text, 40, TEXT)
+	var header := _label(header_text, 48, TEXT)
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(header)
 
 	v.add_child(_spacer(8))
 
-	var body := _label(body_text, 18, TEXT)
+	var body := _label(body_text, 16, TEXT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(body)
 
@@ -62,7 +62,7 @@ func _ready() -> void:
 	var unlock_list: Array = GameState.pending_newspaper.get("ending_unlocks", [])
 	if not unlock_list.is_empty():
 		v.add_child(_spacer(8))
-		v.add_child(_label("NEW FIREWORKS UNLOCKED:", 20, GOLD))
+		v.add_child(_label("NEW FIREWORKS UNLOCKED:", 32, GOLD))
 		for u in unlock_list:
 			v.add_child(_label("  • %s" % String(u), 16, GOLD))
 
@@ -74,14 +74,12 @@ func _ready() -> void:
 
 	var title_btn := Button.new()
 	title_btn.text = "Return to Title"
-	title_btn.add_theme_font_size_override("font_size", 20)
 	title_btn.custom_minimum_size = Vector2(220, 44)
 	title_btn.pressed.connect(func() -> void: Router.return_to_title_from_ending())
 	btn_row.add_child(title_btn)
 
 	var again_btn := Button.new()
 	again_btn.text = "Start New Run"
-	again_btn.add_theme_font_size_override("font_size", 20)
 	again_btn.custom_minimum_size = Vector2(220, 44)
 	again_btn.pressed.connect(func() -> void: Router.start_new_run())
 	btn_row.add_child(again_btn)
