@@ -239,7 +239,7 @@ func _fans_block() -> Control:
 	var h := HBoxContainer.new()
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	h.add_theme_constant_override("separation", 8)
-	h.add_child(_icon(ICON_FANS, 14))
+	h.add_child(_icon(ICON_FANS, 18))
 
 	var next_zone: Dictionary = BalanceConfig.get_zone(GameState.current_zone + 1)
 	var threshold: int = 0 if next_zone.is_empty() else int(next_zone.get("threshold_repeat_fans", 0))
@@ -273,10 +273,10 @@ func _fans_block() -> Control:
 
 
 func _cash_block() -> Control:
+	# No money icon — amber color + right-aligned position is enough per
+	# the polish spec (and it removes the duplicate dollar glyph).
 	var h := HBoxContainer.new()
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
-	h.add_theme_constant_override("separation", 8)
-	h.add_child(_icon(ICON_MONEY, 14))
 	_cash_label = _inter_label(
 		"$%s" % _fmt_num(int(GameState.money)), SIZE_H2, FONT_SEMIBOLD, ACCENT_AMBER)
 	h.add_child(_cash_label)
@@ -391,13 +391,10 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	h.add_child(name_lbl)
 
-	var cost_lbl := _inter_label("$%s" % _fmt_num(cost), SIZE_META, FONT_MEDIUM, ACCENT_AMBER)
-	h.add_child(cost_lbl)
-	var dot := _inter_label("·", SIZE_META, FONT_REGULAR, TEXT_DIM)
-	h.add_child(dot)
-	var eng_lbl := _inter_label(
-		"%d eng" % int(fw.get("engagement", 0)), SIZE_META, FONT_REGULAR, TEXT_MUTED)
-	h.add_child(eng_lbl)
+	# Row keeps just the amber cost — detailed stats moved to the info
+	# modal (Phase 3). Fewer glyphs per row = easier scan.
+	h.add_child(_inter_label(
+		"$%s" % _fmt_num(cost), SIZE_BODY_SM, FONT_MEDIUM, ACCENT_AMBER))
 
 	var minus := _qty_button("-")
 	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
@@ -449,12 +446,7 @@ func _build_marketing_and_enhancements() -> Control:
 	var groups: Dictionary = GameEngine.available_enhancements()
 	for category in groups.keys():
 		v.add_child(_strip(2))
-		v.add_child(_inter_label(
-			String(category).capitalize(), SIZE_LABEL, FONT_REGULAR, TEXT_SECONDARY))
-		v.add_child(_build_enhancement_row(String(category), "None", {}, true))
-		for eh in groups[category]:
-			v.add_child(_build_enhancement_row(
-				String(category), String(eh.name), eh, false))
+		v.add_child(_build_enhancement_pills(String(category), groups[category]))
 	return scroll
 
 
@@ -504,79 +496,70 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 	return wrap
 
 
-func _build_enhancement_row(category: String, name: String, eh: Dictionary, is_none: bool) -> Control:
+func _build_enhancement_pills(category: String, options: Array) -> Control:
+	# One row per category: subsection label on the left, pills flowing
+	# to the right. HFlowContainer wraps pills to a new line if they
+	# overflow the 384px panel.
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	v.add_child(_inter_label(
+		String(category).to_upper(), SIZE_LABEL, FONT_SEMIBOLD, TEXT_MUTED))
+
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 6)
+	v.add_child(flow)
+
+	flow.add_child(_enhancement_pill(category, "None", {}, true))
+	for eh in options:
+		var eh_dict: Dictionary = eh
+		flow.add_child(_enhancement_pill(
+			category, String(eh_dict.name), eh_dict, false))
+	return v
+
+
+func _enhancement_pill(category: String, name: String, eh: Dictionary, is_none: bool) -> Button:
 	var selected: bool = (is_none and not _enhancements.has(category)) \
 		or (not is_none and String(_enhancements.get(category, "")) == name)
-	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 32)
-	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var bg: Color = CARD_BG_SELECTED if selected else CARD_BG
-	var border: Color = BORDER_AMBER if selected else BORDER_SUBTLE
-	wrap.add_theme_stylebox_override("panel", _rounded_style(bg, border, 4))
 
-	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 12)
-	pad.add_theme_constant_override("margin_right", 12)
-	pad.add_theme_constant_override("margin_top", 6)
-	pad.add_theme_constant_override("margin_bottom", 6)
-	wrap.add_child(pad)
-
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 10)
-	pad.add_child(h)
-
-	h.add_child(_checkbox_tile(selected))
-
-	# Single-line layout so the row hits 32px cleanly.
-	var name_lbl := _inter_label(name, SIZE_BODY_SM, FONT_MEDIUM, TEXT_PRIMARY)
-	h.add_child(name_lbl)
-
-	var effect_text: String = ""
+	var label: String = name
 	if not is_none:
-		if eh.has("eng_mult"):
-			effect_text += "+%d%% eng" % int(float(eh.eng_mult) * 100)
-		if eh.has("tip_mult"):
-			if effect_text != "":
-				effect_text += " · "
-			effect_text += "+%d%% tips" % int(float(eh.tip_mult) * 100)
-	var effect_lbl := _inter_label(effect_text, SIZE_LABEL, FONT_REGULAR, TEXT_MUTED)
-	effect_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	effect_lbl.clip_text = true
-	effect_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	h.add_child(effect_lbl)
+		label = "%s $%s" % [name, _fmt_num(int(eh.get("cost", 0)))]
 
-	if not is_none:
-		h.add_child(_inter_label(
-			"$%s" % _fmt_num(int(eh.get("cost", 0))),
-			SIZE_BODY_SM, FONT_MEDIUM, ACCENT_AMBER))
-
-	# Row-level click via overlay button
-	var click := Button.new()
-	click.flat = true
-	click.anchor_right = 1.0
-	click.anchor_bottom = 1.0
-	click.focus_mode = Control.FOCUS_NONE
-	click.mouse_filter = Control.MOUSE_FILTER_PASS
-	wrap.add_child(click)
+	var b := Button.new()
+	b.text = label
+	b.toggle_mode = true
+	b.button_pressed = selected
+	b.add_theme_font_override("font", FONT_MEDIUM)
+	b.add_theme_font_size_override("font_size", SIZE_BODY_SM)
+	b.custom_minimum_size = Vector2(0, 32)
+	_enhancement_pill_style(b, selected)
 	var target_name: String = "" if is_none else name
-	click.pressed.connect(func() -> void: _select_enhancement(category, target_name))
-	return wrap
+	b.pressed.connect(func() -> void: _select_enhancement(category, target_name))
+	return b
 
 
-func _checkbox_tile(checked: bool) -> Control:
-	var tile := PanelContainer.new()
-	tile.custom_minimum_size = Vector2(16, 16)
-	if checked:
-		tile.add_theme_stylebox_override("panel", _rounded_style(
-			ACCENT_AMBER, BORDER_AMBER_STRONG, 3))
+func _enhancement_pill_style(b: Button, selected: bool) -> void:
+	if selected:
+		b.add_theme_color_override("font_color", ACCENT_AMBER)
+		b.add_theme_color_override("font_hover_color", ACCENT_AMBER)
+		b.add_theme_color_override("font_pressed_color", ACCENT_AMBER)
+		b.add_theme_stylebox_override("normal", _button_style_padded(
+			Color(1.0, 0.722, 0.302, 0.15), BORDER_AMBER, 4, 6, 14))
+		b.add_theme_stylebox_override("hover", _button_style_padded(
+			Color(1.0, 0.722, 0.302, 0.22), BORDER_AMBER, 4, 6, 14))
+		b.add_theme_stylebox_override("pressed", _button_style_padded(
+			Color(1.0, 0.722, 0.302, 0.28), BORDER_AMBER, 4, 6, 14))
 	else:
-		tile.add_theme_stylebox_override("panel", _rounded_style(
-			Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.2), 3))
-	if checked:
-		var check := _icon(ICON_CHECK, 12)
-		check.modulate = NIGHT_DEEP
-		tile.add_child(check)
-	return tile
+		b.add_theme_color_override("font_color", TEXT_MUTED)
+		b.add_theme_color_override("font_hover_color", TEXT_PRIMARY)
+		b.add_theme_color_override("font_pressed_color", TEXT_PRIMARY)
+		b.add_theme_stylebox_override("normal", _button_style_padded(
+			Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.1), 4, 6, 14))
+		b.add_theme_stylebox_override("hover", _button_style_padded(
+			Color(1.0, 1.0, 1.0, 0.04), Color(1.0, 1.0, 1.0, 0.18), 4, 6, 14))
+		b.add_theme_stylebox_override("pressed", _button_style_padded(
+			Color(1.0, 1.0, 1.0, 0.08), Color(1.0, 1.0, 1.0, 0.25), 4, 6, 14))
 
 
 # --- upgrades panel ---------------------------------------------------------
@@ -601,8 +584,12 @@ func _build_upgrades_panel_body() -> Control:
 
 	var category_group: Array[Button] = []
 	for cat in UPGRADE_CATEGORIES:
-		var b := _tab_button(String(UPGRADE_CATEGORY_LABELS.get(cat, cat)), cat == "All")
 		var cat_str: String = cat
+		var icon_path: String = CATEGORY_ICONS.get(cat, "") if cat != "All" else ""
+		var b := _tab_button(
+			String(UPGRADE_CATEGORY_LABELS.get(cat, cat)),
+			icon_path, cat == "All")
+		b.tooltip_text = _tab_tooltip(cat_str)
 		b.pressed.connect(func() -> void:
 			_upgrade_category_filter = cat_str
 			for btn in category_group:
@@ -767,8 +754,10 @@ func _build_locked_upgrade_row(up: Dictionary) -> Control:
 	var wrap := PanelContainer.new()
 	wrap.custom_minimum_size = Vector2(0, 40)
 	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	wrap.add_theme_stylebox_override("panel", _rounded_style(CARD_BG_LOCKED, BORDER_SUBTLE, 4))
-	wrap.modulate = Color(1, 1, 1, 0.55)
+	# Darker backdrop so text stays readable regardless of the bright
+	# window / fire-pit glow bleeding through from the zone background.
+	wrap.add_theme_stylebox_override("panel", _rounded_style(
+		Color(0.039, 0.055, 0.102, 0.75), BORDER_SUBTLE, 4))
 
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 14)
@@ -1207,17 +1196,31 @@ func _menu_button() -> Button:
 	return b
 
 
-func _tab_button(text: String, active: bool) -> Button:
+func _tab_button(text: String, icon_path: String, active: bool) -> Button:
 	var b := Button.new()
-	b.text = text.to_upper()
+	if icon_path != "":
+		b.icon = load(icon_path)
+		b.expand_icon = true
+	else:
+		b.text = text.to_upper()
 	b.toggle_mode = true
 	b.button_pressed = active
 	b.add_theme_font_override("font", FONT_SEMIBOLD)
 	b.add_theme_font_size_override("font_size", SIZE_LABEL)
-	b.custom_minimum_size = Vector2(0, 26)
+	b.custom_minimum_size = Vector2(0, 28)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tab_button_set_active(b, active)
 	return b
+
+
+func _tab_tooltip(cat: String) -> String:
+	match cat:
+		"All": return "All upgrades"
+		"crew": return "Crew"
+		"infrastructure": return "Infrastructure"
+		"revenue": return "Revenue"
+		"marketing": return "Marketing"
+	return cat.capitalize()
 
 
 func _tab_button_set_active(b: Button, active: bool) -> void:
@@ -1225,6 +1228,8 @@ func _tab_button_set_active(b: Button, active: bool) -> void:
 	if active:
 		b.add_theme_color_override("font_color", ACCENT_AMBER)
 		b.add_theme_color_override("font_hover_color", ACCENT_AMBER)
+		b.add_theme_color_override("icon_normal_color", ACCENT_AMBER)
+		b.add_theme_color_override("icon_hover_color", ACCENT_AMBER)
 		b.add_theme_stylebox_override("normal", _rounded_style(
 			ACCENT_AMBER_DIM, Color(0, 0, 0, 0), 3))
 		b.add_theme_stylebox_override("hover", _rounded_style(
@@ -1234,6 +1239,8 @@ func _tab_button_set_active(b: Button, active: bool) -> void:
 	else:
 		b.add_theme_color_override("font_color", TEXT_MUTED)
 		b.add_theme_color_override("font_hover_color", TEXT_PRIMARY)
+		b.add_theme_color_override("icon_normal_color", TEXT_MUTED)
+		b.add_theme_color_override("icon_hover_color", TEXT_PRIMARY)
 		b.add_theme_stylebox_override("normal", _rounded_style(
 			Color(0, 0, 0, 0), Color(0, 0, 0, 0), 3))
 		b.add_theme_stylebox_override("hover", _rounded_style(
