@@ -6,8 +6,8 @@ const ZoneBackgroundScript := preload("res://scripts/components/ZoneBackground.g
 const FireworkFieldScript := preload("res://scripts/fireworks/firework_field.gd")
 
 # How often an ambient burst fires in the strategy-screen backdrop.
-const AMBIENT_INTERVAL_MIN := 10.0
-const AMBIENT_INTERVAL_MAX := 15.0
+const AMBIENT_INTERVAL_MIN := 5.0
+const AMBIENT_INTERVAL_MAX := 7.0
 # Keep bursts away from the panel column edges so they don't feel stuck
 # behind text.
 const AMBIENT_EDGE_INSET := 200
