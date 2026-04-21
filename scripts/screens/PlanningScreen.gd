@@ -10,7 +10,7 @@ const AMBIENT_INTERVAL_MIN := 5.0
 const AMBIENT_INTERVAL_MAX := 7.0
 # Keep bursts away from the panel column edges so they don't feel stuck
 # behind text.
-const AMBIENT_EDGE_INSET := 200
+const AMBIENT_EDGE_INSET := 150
 
 # --- fonts -------------------------------------------------------------------
 
