@@ -408,7 +408,7 @@ func _build_firework_row(fw: Dictionary) -> Control:
 		"$%s" % _fmt_num(cost), SIZE_BODY_SM, FONT_MEDIUM, ACCENT_AMBER))
 
 	var minus := _qty_button("-")
-	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
+	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_PRIMARY)
 	qty_lbl.custom_minimum_size = Vector2(28, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _qty_button("+")
@@ -494,7 +494,7 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 		SIZE_META, FONT_REGULAR, TEXT_MUTED))
 
 	var minus := _qty_button("-")
-	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_MUTED)
+	var qty_lbl := _inter_label("0", SIZE_BODY, FONT_MEDIUM, TEXT_PRIMARY)
 	qty_lbl.custom_minimum_size = Vector2(32, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _qty_button("+")
@@ -535,7 +535,11 @@ func _enhancement_pill(category: String, name: String, eh: Dictionary, is_none: 
 
 	var label: String = name
 	if not is_none:
-		label = "%s $%s" % [name, _fmt_num(int(eh.get("cost", 0)))]
+		label = "%s %s $%s" % [
+			_pill_short_name(name),
+			_pill_effect(eh),
+			_fmt_num(int(eh.get("cost", 0))),
+		]
 
 	var b := Button.new()
 	b.text = label
@@ -544,10 +548,32 @@ func _enhancement_pill(category: String, name: String, eh: Dictionary, is_none: 
 	b.add_theme_font_override("font", FONT_MEDIUM)
 	b.add_theme_font_size_override("font_size", SIZE_BODY_SM)
 	b.custom_minimum_size = Vector2(0, 32)
+	if not is_none:
+		b.tooltip_text = name
 	_enhancement_pill_style(b, selected)
 	var target_name: String = "" if is_none else name
 	b.pressed.connect(func() -> void: _select_enhancement(category, target_name))
 	return b
+
+
+func _pill_short_name(name: String) -> String:
+	match name:
+		"Candy from Store": return "Candy"
+		"Vending Machines": return "Vending"
+		"Catering Team": return "Catering"
+		"Basic PA System": return "PA System"
+		"Premium Sound": return "Premium Sound"
+	return name
+
+
+func _pill_effect(eh: Dictionary) -> String:
+	# "Quality" is the player-facing umbrella term for engagement boosts;
+	# "tips" maps directly to tip_mult.
+	if eh.has("eng_mult"):
+		return "+%d%% quality" % int(float(eh.eng_mult) * 100)
+	if eh.has("tip_mult"):
+		return "+%d%% tips" % int(float(eh.tip_mult) * 100)
+	return ""
 
 
 func _enhancement_pill_style(b: Button, selected: bool) -> void:
@@ -794,6 +820,9 @@ func _build_locked_upgrade_row(up: Dictionary) -> Control:
 
 
 func _next_unlock_callout(up: Dictionary) -> Control:
+	# Rendered as a Button overlay so the amber border actually does
+	# something: clicking filters the Upgrades panel to the relevant
+	# category so the locked row surfaces at the top of its section.
 	var wrap := PanelContainer.new()
 	var style := _rounded_style(
 		Color(1.0, 0.722, 0.302, 0.05),
@@ -819,7 +848,22 @@ func _next_unlock_callout(up: Dictionary) -> Control:
 	var lbl := _inter_label(
 		"Next: %s at Zone %d" % [String(up.name), int(up.get("min_zone", 1))],
 		SIZE_META, FONT_MEDIUM, TEXT_PRIMARY)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(lbl)
+
+	var click := Button.new()
+	click.flat = true
+	click.anchor_right = 1.0
+	click.anchor_bottom = 1.0
+	click.focus_mode = Control.FOCUS_NONE
+	click.mouse_filter = Control.MOUSE_FILTER_PASS
+	click.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	click.tooltip_text = "Show details about %s" % String(up.name)
+	wrap.add_child(click)
+	var cat: String = String(up.get("category", "All"))
+	click.pressed.connect(func() -> void:
+		_upgrade_category_filter = cat
+		_rebuild_upgrades())
 	return wrap
 
 
@@ -875,19 +919,25 @@ func _build_bottom_bar() -> Control:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.add_theme_constant_override("separation", 4)
 	_summary_hint = _inter_label(
-		"SELECT FIREWORKS TO CONTINUE", SIZE_LABEL, FONT_SEMIBOLD, TEXT_MUTED)
+		"SELECT FIREWORKS TO CONTINUE", SIZE_LABEL, FONT_REGULAR, TEXT_DIM)
 	_summary_main = _inter_label(
 		"Spend $0 · Cash $%s" % _fmt_num(int(GameState.money)),
-		SIZE_BODY, FONT_MEDIUM, TEXT_PRIMARY)
+		SIZE_BODY_SM, FONT_REGULAR, TEXT_SECONDARY)
 	left.add_child(_summary_hint)
 	left.add_child(_summary_main)
 	h.add_child(left)
 
-	h.add_child(_menu_button())
+	# Gap between summary and right-side controls.
+	var right := HBoxContainer.new()
+	right.alignment = BoxContainer.ALIGNMENT_END
+	right.add_theme_constant_override("separation", 12)
+	h.add_child(right)
+
+	right.add_child(_menu_button())
 
 	_run_show_button = _run_show_primary()
 	_run_show_button.pressed.connect(_on_run_show_pressed)
-	h.add_child(_run_show_button)
+	right.add_child(_run_show_button)
 	return bar
 
 
@@ -910,7 +960,8 @@ func _nudge_firework(fw: Dictionary, delta: int, entry: Dictionary) -> void:
 
 	var qty_label: Label = entry.qty_label
 	qty_label.text = str(new_qty)
-	qty_label.add_theme_color_override("font_color", ACCENT_AMBER if new_qty > 0 else TEXT_MUTED)
+	qty_label.add_theme_color_override("font_color", ACCENT_AMBER if new_qty > 0 else TEXT_PRIMARY)
+	qty_label.add_theme_font_override("font", FONT_SEMIBOLD if new_qty > 0 else FONT_MEDIUM)
 
 	var style: StyleBoxFlat = entry.style
 	if new_qty > 0:
@@ -938,7 +989,8 @@ func _nudge_marketing(mk: Dictionary, delta: int, qty_label: Label, style: Style
 			return
 	_marketing_qty[name_str] = new_qty
 	qty_label.text = str(new_qty)
-	qty_label.add_theme_color_override("font_color", ACCENT_AMBER if new_qty > 0 else TEXT_MUTED)
+	qty_label.add_theme_color_override("font_color", ACCENT_AMBER if new_qty > 0 else TEXT_PRIMARY)
+	qty_label.add_theme_font_override("font", FONT_SEMIBOLD if new_qty > 0 else FONT_MEDIUM)
 	if new_qty > 0:
 		style.bg_color = CARD_BG_SELECTED
 		style.border_color = BORDER_AMBER
@@ -1063,7 +1115,7 @@ func _refresh_totals() -> void:
 	if fw_count <= 0:
 		_summary_hint.text = "SELECT FIREWORKS TO CONTINUE"
 		_summary_main.text = "Spend $0 · Cash $%s" % _fmt_num(int(GameState.money))
-		_summary_main.add_theme_color_override("font_color", TEXT_PRIMARY)
+		_summary_main.add_theme_color_override("font_color", TEXT_SECONDARY)
 	else:
 		_summary_hint.text = "READY TO RUN SHOW"
 		if overspend:
@@ -1073,9 +1125,16 @@ func _refresh_totals() -> void:
 		else:
 			_summary_main.text = "Spend $%s · Cash after $%s" % [
 				_fmt_num(int(spend)), _fmt_num(int(cash_after))]
-			_summary_main.add_theme_color_override("font_color", TEXT_PRIMARY)
+			_summary_main.add_theme_color_override("font_color", TEXT_SECONDARY)
 
-	_run_show_button.disabled = overspend or (fw_count <= 0)
+	var disabled := overspend or (fw_count <= 0)
+	_run_show_button.disabled = disabled
+	if disabled and fw_count <= 0:
+		_run_show_button.tooltip_text = "Pick at least one firework"
+	elif disabled and overspend:
+		_run_show_button.tooltip_text = "Exceeds available cash"
+	else:
+		_run_show_button.tooltip_text = ""
 
 
 func _on_run_show_pressed() -> void:
@@ -1251,34 +1310,63 @@ func _run_show_primary() -> Button:
 	b.add_theme_color_override("font_color", NIGHT_DEEP)
 	b.add_theme_color_override("font_hover_color", NIGHT_DEEP)
 	b.add_theme_color_override("font_pressed_color", NIGHT_DEEP)
-	# Disabled state keeps the amber shape visible — it should still
-	# read as "this is the primary action" even when not clickable.
-	b.add_theme_color_override("font_disabled_color", Color(NIGHT_DEEP.r, NIGHT_DEEP.g, NIGHT_DEEP.b, 0.6))
-	b.add_theme_stylebox_override("normal", _button_style_padded(
-		ACCENT_AMBER, ACCENT_AMBER, 4, 12, 32))
-	b.add_theme_stylebox_override("hover", _button_style_padded(
-		ACCENT_AMBER_HOVER, ACCENT_AMBER_HOVER, 4, 12, 32))
-	b.add_theme_stylebox_override("pressed", _button_style_padded(
-		ACCENT_AMBER, ACCENT_AMBER, 4, 12, 32))
+	# Disabled: subtle amber tint + amber border + dim amber text. The
+	# silhouette still reads as the primary action without pretending to
+	# be clickable.
+	b.add_theme_color_override("font_disabled_color", Color(0.541, 0.459, 0.333))
+	# Enabled ("normal"): solid amber fill with a soft amber glow via
+	# shadow_* properties on the stylebox. No border — the fill is the
+	# statement.
+	var normal_style := _button_style_padded(
+		ACCENT_AMBER, ACCENT_AMBER, 4, 12, 32)
+	normal_style.border_width_left = 0
+	normal_style.border_width_right = 0
+	normal_style.border_width_top = 0
+	normal_style.border_width_bottom = 0
+	normal_style.shadow_color = Color(1.0, 0.722, 0.302, 0.20)
+	normal_style.shadow_size = 8
+	normal_style.shadow_offset = Vector2(0, 2)
+	var hover_style := _button_style_padded(
+		ACCENT_AMBER_HOVER, ACCENT_AMBER_HOVER, 4, 12, 32)
+	hover_style.border_width_left = 0
+	hover_style.border_width_right = 0
+	hover_style.border_width_top = 0
+	hover_style.border_width_bottom = 0
+	hover_style.shadow_color = Color(1.0, 0.722, 0.302, 0.40)
+	hover_style.shadow_size = 12
+	hover_style.shadow_offset = Vector2(0, 4)
+	var pressed_style := _button_style_padded(
+		Color(0.902, 0.639, 0.251), Color(0.902, 0.639, 0.251), 4, 12, 32)
+	pressed_style.border_width_left = 0
+	pressed_style.border_width_right = 0
+	pressed_style.border_width_top = 0
+	pressed_style.border_width_bottom = 0
+	b.add_theme_stylebox_override("normal", normal_style)
+	b.add_theme_stylebox_override("hover", hover_style)
+	b.add_theme_stylebox_override("pressed", pressed_style)
 	b.add_theme_stylebox_override("disabled", _button_style_padded(
-		Color(1.0, 0.722, 0.302, 0.35), Color(1.0, 0.722, 0.302, 0.5), 4, 12, 32))
-	b.custom_minimum_size = Vector2(160, 40)
+		Color(1.0, 0.722, 0.302, 0.08),
+		Color(1.0, 0.722, 0.302, 0.2),
+		4, 12, 32))
+	b.custom_minimum_size = Vector2(180, 40)
 	return b
 
 
 func _menu_button() -> Button:
+	# Hamburger whispers; only Run Show shouts. Neutral border, muted
+	# icon, no amber accent even on hover.
 	var b := Button.new()
 	b.icon = load(ICON_MENU)
 	b.expand_icon = true
 	b.add_theme_color_override("icon_normal_color", TEXT_MUTED)
 	b.add_theme_color_override("icon_hover_color", TEXT_PRIMARY)
 	b.add_theme_stylebox_override("normal", _rounded_style(
-		Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.15), 4))
+		Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.10), 4))
 	b.add_theme_stylebox_override("hover", _rounded_style(
-		Color(1.0, 1.0, 1.0, 0.05), Color(1.0, 1.0, 1.0, 0.25), 4))
+		Color(1.0, 1.0, 1.0, 0.05), Color(1.0, 1.0, 1.0, 0.20), 4))
 	b.add_theme_stylebox_override("pressed", _rounded_style(
-		Color(1.0, 1.0, 1.0, 0.1), Color(1.0, 1.0, 1.0, 0.25), 4))
-	b.custom_minimum_size = Vector2(40, 40)
+		Color(1.0, 1.0, 1.0, 0.08), Color(1.0, 1.0, 1.0, 0.22), 4))
+	b.custom_minimum_size = Vector2(36, 36)
 	return b
 
 
@@ -1287,14 +1375,14 @@ func _tab_button(text: String, icon_path: String, active: bool) -> Button:
 	if icon_path != "":
 		b.icon = load(icon_path)
 		b.expand_icon = true
-	else:
-		b.text = text.to_upper()
+	b.text = text.to_upper()
 	b.toggle_mode = true
 	b.button_pressed = active
 	b.add_theme_font_override("font", FONT_SEMIBOLD)
 	b.add_theme_font_size_override("font_size", SIZE_LABEL)
 	b.custom_minimum_size = Vector2(0, 28)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.add_theme_constant_override("h_separation", 4)
 	_tab_button_set_active(b, active)
 	return b
 
