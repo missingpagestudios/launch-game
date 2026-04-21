@@ -199,24 +199,18 @@ func _build_title() -> Control:
 	fv.variation_embolden = 0.4
 
 	var wrap := Control.new()
-	wrap.custom_minimum_size = Vector2(0, 120)
+	wrap.custom_minimum_size = Vector2(0, 100)
 	wrap.size_flags_horizontal = Control.SIZE_FILL
 	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Two rings of glow ghosts: an outer diffuse halo and a tighter
-	# inner halo that brightens the glyph edges.
-	var rings := [
-		{"radius": 14.0, "alpha": 0.10},
-		{"radius": 7.0, "alpha": 0.16},
-		{"radius": 3.0, "alpha": 0.22},
-	]
-	for ring in rings:
-		var r: float = float(ring.radius)
-		var a: float = float(ring.alpha)
-		for angle_deg in [0, 45, 90, 135, 180, 225, 270, 315]:
-			var rad: float = deg_to_rad(float(angle_deg))
-			var off := Vector2(cos(rad) * r, sin(rad) * r)
-			wrap.add_child(_title_layer(fv, off, Color(1.0, 0.722, 0.302, a), true))
+	# One tight ring of glow ghosts — previous halo read as a hazy
+	# amber blob. Four offsets at radius 3 with low alpha give the
+	# glyph edges a subtle lift without blurring the silhouette.
+	var r := 3.0
+	for angle_deg in [0, 90, 180, 270]:
+		var rad := deg_to_rad(float(angle_deg))
+		var off := Vector2(cos(rad) * r, sin(rad) * r)
+		wrap.add_child(_title_layer(fv, off, Color(1.0, 0.722, 0.302, 0.15), true))
 
 	# Clean cream main text on top — no offset, normal blend.
 	wrap.add_child(_title_layer(fv, Vector2.ZERO, TEXT_PRIMARY, false))
@@ -292,10 +286,10 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	b.add_theme_stylebox_override("hover_pressed", empty)
 	b.disabled = disabled
 
+	# Slide only on mouse hover — keyboard focus still recolours via
+	# font_focus_color but leaves the column edge aligned.
 	b.mouse_entered.connect(func() -> void: _menu_hover(b, true))
 	b.mouse_exited.connect(func() -> void: _menu_hover(b, false))
-	b.focus_entered.connect(func() -> void: _menu_hover(b, true))
-	b.focus_exited.connect(func() -> void: _menu_hover(b, false))
 
 	b.pressed.connect(func() -> void: _on_menu_select(idx))
 	return b
