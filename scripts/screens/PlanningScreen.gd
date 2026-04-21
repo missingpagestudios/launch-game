@@ -106,6 +106,10 @@ var _run_show_button: Button
 var _summary_hint: Label
 var _summary_main: Label
 var _upgrade_body: VBoxContainer
+var _shake_root: Control
+var _warning_label: Label
+var _warning_tween: Tween
+var _shake_tween: Tween
 
 
 # ---------------------------------------------------------------------------
@@ -117,12 +121,19 @@ func _ready() -> void:
 	root.anchor_bottom = 1.0
 	root.add_theme_constant_override("separation", 0)
 	add_child(root)
+	_shake_root = root
 
 	root.add_child(_build_top_bar())
 	root.add_child(_strip(16))
 	root.add_child(_build_panels())
 	root.add_child(_strip(16))
 	root.add_child(_build_bottom_bar())
+
+	_warning_label = _inter_label("", SIZE_BODY, FONT_SEMIBOLD, STATE_WARN)
+	_warning_label.position = Vector2(32, 664)
+	_warning_label.modulate = Color(1, 1, 1, 0)
+	_warning_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_warning_label)
 
 	_refresh_totals()
 
@@ -888,6 +899,13 @@ func _nudge_firework(fw: Dictionary, delta: int, entry: Dictionary) -> void:
 	var cap: int = int(BalanceConfig.get_zone(GameState.current_zone).get("firework_cap", 300))
 	var new_qty: int = maxi(current + delta, 0)
 	new_qty = mini(new_qty, cap)
+	if new_qty == current:
+		return
+	if delta > 0:
+		var extra: float = float(BalanceConfig.get_firework(name_str).get("cost", 0)) * (new_qty - current)
+		if _current_total_spend() + extra > GameState.money:
+			_trigger_insufficient_funds()
+			return
 	_fireworks_qty[name_str] = new_qty
 
 	var qty_label: Label = entry.qty_label
@@ -911,6 +929,13 @@ func _nudge_marketing(mk: Dictionary, delta: int, qty_label: Label, style: Style
 	var new_qty: int = maxi(current + delta, 0)
 	if cap > 0:
 		new_qty = mini(new_qty, cap)
+	if new_qty == current:
+		return
+	if delta > 0:
+		var extra: float = float(mk.get("cost", 0)) * (new_qty - current)
+		if _current_total_spend() + extra > GameState.money:
+			_trigger_insufficient_funds()
+			return
 	_marketing_qty[name_str] = new_qty
 	qty_label.text = str(new_qty)
 	qty_label.add_theme_color_override("font_color", ACCENT_AMBER if new_qty > 0 else TEXT_MUTED)
@@ -924,12 +949,73 @@ func _nudge_marketing(mk: Dictionary, delta: int, qty_label: Label, style: Style
 
 
 func _select_enhancement(category: String, name: String) -> void:
+	if name != "":
+		var current_cost: float = 0.0
+		if _enhancements.has(category):
+			current_cost = float(BalanceConfig.get_enhancement(
+				String(category), String(_enhancements[category])).get("cost", 0))
+		var new_cost: float = float(BalanceConfig.get_enhancement(
+			String(category), name).get("cost", 0))
+		var delta_cost: float = new_cost - current_cost
+		if delta_cost > 0 and _current_total_spend() + delta_cost > GameState.money:
+			_trigger_insufficient_funds()
+			return
 	if name == "":
 		_enhancements.erase(category)
 	else:
 		_enhancements[category] = name
 	_rebuild_planning()
 	_refresh_totals()
+
+
+func _current_total_spend() -> float:
+	var spend: float = 0.0
+	for name_str in _fireworks_qty.keys():
+		var qty: int = int(_fireworks_qty[name_str])
+		if qty <= 0:
+			continue
+		spend += float(BalanceConfig.get_firework(name_str).get("cost", 0)) * qty
+	for name_str in _marketing_qty.keys():
+		var qty: int = int(_marketing_qty[name_str])
+		if qty <= 0:
+			continue
+		spend += float(BalanceConfig.get_marketing(name_str).get("cost", 0)) * qty
+	for category in _enhancements.keys():
+		var eh: Dictionary = BalanceConfig.get_enhancement(
+			String(category), String(_enhancements[category]))
+		spend += float(eh.get("cost", 0))
+	for up_name in _upgrade_buys:
+		spend += float(BalanceConfig.get_upgrade(up_name).get("cost", 0))
+	return spend
+
+
+func _trigger_insufficient_funds() -> void:
+	_shake_screen()
+	_flash_warning("NOT ENOUGH FUNDS")
+
+
+func _shake_screen() -> void:
+	if _shake_root == null:
+		return
+	if _shake_tween != null and _shake_tween.is_valid():
+		_shake_tween.kill()
+	_shake_root.position = Vector2.ZERO
+	_shake_tween = create_tween()
+	var offsets := [8, -7, 5, -4, 2, 0]
+	for x in offsets:
+		_shake_tween.tween_property(_shake_root, "position:x", float(x), 0.045)
+
+
+func _flash_warning(text: String) -> void:
+	if _warning_label == null:
+		return
+	_warning_label.text = text
+	_warning_label.modulate = Color(1, 1, 1, 1)
+	if _warning_tween != null and _warning_tween.is_valid():
+		_warning_tween.kill()
+	_warning_tween = create_tween()
+	_warning_tween.tween_interval(1.2)
+	_warning_tween.tween_property(_warning_label, "modulate:a", 0.0, 0.4)
 
 
 func _rebuild_planning() -> void:
