@@ -10,6 +10,15 @@ const FONT_REGULAR := preload("res://assets/fonts/Inter-Regular.ttf")
 const FONT_MEDIUM := preload("res://assets/fonts/Inter-Medium.ttf")
 const FONT_SEMIBOLD := preload("res://assets/fonts/Inter-SemiBold.ttf")
 const FONT_ITALIC := preload("res://assets/fonts/Inter-Italic.ttf")
+const FireworkFieldScript := preload("res://scripts/fireworks/firework_field.gd")
+
+# Ambient burst cadence + spatial gating (LEFT-side only).
+const AMBIENT_INTERVAL_MIN := 7.0
+const AMBIENT_INTERVAL_MAX := 10.0
+const AMBIENT_LEFT_X_MIN := 120.0
+const AMBIENT_LEFT_X_MAX := 560.0       # Keep bursts clear of the right column.
+const AMBIENT_GROUND_Y_OFFSET := 260.0  # Launch point ~260px above bottom edge.
+const AMBIENT_STAR_COUNT := 60
 
 # Spec hero image — fallback chain if it isn't in the repo yet.
 const BG_CANDIDATES: Array[String] = [
@@ -40,6 +49,14 @@ var _subtitle_label: Label
 var _tweens: Array[Tween] = []
 var _entrance_done: bool = false
 
+var _stars_node: Control
+var _star_positions: PackedVector2Array = PackedVector2Array()
+var _star_sizes: PackedFloat32Array = PackedFloat32Array()
+var _star_phases: PackedFloat32Array = PackedFloat32Array()
+var _ambient_field: Node2D
+var _ambient_timer: Timer
+var _ambient_catalog: Array = []
+
 
 func _ready() -> void:
 	# Headless smoke path: run scripted strategies + scene-parse check and quit.
@@ -48,6 +65,7 @@ func _ready() -> void:
 		return
 
 	_build_background()
+	_build_ambient()
 	_build_right_column()
 	_build_bottom_bar()
 	_prime_and_animate_entrance()
@@ -76,6 +94,96 @@ func _build_background() -> void:
 		fill.anchor_right = 1.0
 		fill.anchor_bottom = 1.0
 		add_child(fill)
+
+
+func _build_ambient() -> void:
+	_build_star_field()
+	_build_firework_field()
+
+
+func _build_star_field() -> void:
+	# Deterministic star layout so repeated Title visits aren't jarring.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9173
+	_star_positions.clear()
+	_star_sizes.clear()
+	_star_phases.clear()
+	for i in range(AMBIENT_STAR_COUNT):
+		_star_positions.append(Vector2(
+			rng.randf_range(0.0, 1280.0),
+			rng.randf_range(0.0, 720.0 * 0.55)))
+		_star_sizes.append(rng.randf_range(0.8, 2.4))
+		_star_phases.append(rng.randf_range(0.0, TAU))
+
+	_stars_node = Control.new()
+	_stars_node.anchor_right = 1.0
+	_stars_node.anchor_bottom = 1.0
+	_stars_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stars_node.set_script(GDScript.new())
+	# Attach a tiny inline renderer so we don't spawn 60 Control nodes.
+	_stars_node.set_meta("positions", _star_positions)
+	_stars_node.set_meta("sizes", _star_sizes)
+	_stars_node.set_meta("phases", _star_phases)
+	_stars_node.draw.connect(_draw_stars)
+	_stars_node.set_process(true)
+	add_child(_stars_node)
+	# Drive a redraw once per frame for the twinkle animation.
+	var t := Timer.new()
+	t.wait_time = 0.05
+	t.autostart = true
+	t.timeout.connect(func() -> void: if _stars_node != null: _stars_node.queue_redraw())
+	add_child(t)
+
+
+func _draw_stars() -> void:
+	if _stars_node == null:
+		return
+	var time: float = float(Time.get_ticks_msec()) / 1000.0
+	for i in range(_star_positions.size()):
+		var phase: float = _star_phases[i]
+		# Smooth 3-5s twinkle: opacity floats between 0.3 and 0.9.
+		var t: float = 0.5 + 0.3 * sin(time * 1.6 + phase)
+		var alpha: float = clampf(t, 0.3, 0.9)
+		var size: float = _star_sizes[i]
+		_stars_node.draw_rect(
+			Rect2(_star_positions[i], Vector2(size, size)),
+			Color(1.0, 1.0, 1.0, alpha))
+
+
+func _build_firework_field() -> void:
+	_ambient_catalog = []
+	for entry in FireworkBursts.catalog():
+		if String(entry.get("category", "")) == "Real — Backyard":
+			_ambient_catalog.append(entry)
+	if _ambient_catalog.is_empty():
+		return
+
+	_ambient_field = FireworkFieldScript.new()
+	_ambient_field.name = "AmbientFireworkField"
+	# No host_ref — title screen bursts should never shake or flash the
+	# menu; firework_field.gd's shake/flash/fade hooks silently no-op
+	# when host_ref is null.
+	add_child(_ambient_field)
+
+	_ambient_timer = Timer.new()
+	_ambient_timer.one_shot = true
+	_ambient_timer.wait_time = randf_range(AMBIENT_INTERVAL_MIN, AMBIENT_INTERVAL_MAX)
+	_ambient_timer.timeout.connect(_fire_ambient_burst)
+	add_child(_ambient_timer)
+	# Slight staggered start so the first burst doesn't overlap the
+	# entrance animation.
+	_ambient_timer.start(3.0)
+
+
+func _fire_ambient_burst() -> void:
+	if _ambient_field == null or _ambient_catalog.is_empty():
+		return
+	var fw: Dictionary = _ambient_catalog[randi() % _ambient_catalog.size()]
+	var x: float = randf_range(AMBIENT_LEFT_X_MIN, AMBIENT_LEFT_X_MAX)
+	var y: float = get_viewport_rect().size.y - AMBIENT_GROUND_Y_OFFSET
+	_ambient_field.call("launch", fw, Vector2(x, y))
+	_ambient_timer.wait_time = randf_range(AMBIENT_INTERVAL_MIN, AMBIENT_INTERVAL_MAX)
+	_ambient_timer.start()
 
 
 func _build_right_column() -> void:
