@@ -65,6 +65,7 @@ func _ready() -> void:
 
 	var skip := Button.new()
 	skip.text = "Skip donation — keep $%s" % _fmt(float(BalanceConfig.game_params().get("donation_cost", 2_500_000_000)))
+	skip.add_theme_font_size_override("font_size", 16)
 	skip.custom_minimum_size = Vector2(400, 40)
 	skip.pressed.connect(func() -> void: Router.donation_chosen(""))
 	var skip_wrap := HBoxContainer.new()
@@ -99,6 +100,7 @@ func _build_cause_card(cause: Dictionary) -> Control:
 
 	var btn := Button.new()
 	btn.text = "Fund This Cause"
+	btn.add_theme_font_size_override("font_size", 16)
 	btn.custom_minimum_size = Vector2(0, 36)
 	var cause_id := String(cause.id)
 	btn.pressed.connect(func() -> void: Router.donation_chosen(cause_id))

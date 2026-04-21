@@ -74,12 +74,14 @@ func _ready() -> void:
 
 	var title_btn := Button.new()
 	title_btn.text = "Return to Title"
+	title_btn.add_theme_font_size_override("font_size", 16)
 	title_btn.custom_minimum_size = Vector2(220, 44)
 	title_btn.pressed.connect(func() -> void: Router.return_to_title_from_ending())
 	btn_row.add_child(title_btn)
 
 	var again_btn := Button.new()
 	again_btn.text = "Start New Run"
+	again_btn.add_theme_font_size_override("font_size", 16)
 	again_btn.custom_minimum_size = Vector2(220, 44)
 	again_btn.pressed.connect(func() -> void: Router.start_new_run())
 	btn_row.add_child(again_btn)

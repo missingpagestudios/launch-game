@@ -75,6 +75,7 @@ func _ready() -> void:
 func _menu_button(label: String) -> Button:
 	var b := Button.new()
 	b.text = label
+	b.add_theme_font_size_override("font_size", 16)
 	b.custom_minimum_size = Vector2(360, 48)
 	b.focus_mode = Control.FOCUS_ALL
 	return b

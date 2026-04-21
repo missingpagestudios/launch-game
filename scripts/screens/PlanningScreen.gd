@@ -289,6 +289,7 @@ func _build_marketing_and_enhancements() -> Control:
 		var none_btn := CheckBox.new()
 		none_btn.text = "None"
 		none_btn.button_pressed = true
+		none_btn.add_theme_font_size_override("font_size", 16)
 		group_container.add_child(none_btn)
 		var buttons: Array[CheckBox] = [none_btn]
 		var cat_str: String = String(category)
@@ -303,6 +304,7 @@ func _build_marketing_and_enhancements() -> Control:
 				cb.text += " (+%d%% eng)" % int(float(eh_dict.eng_mult) * 100)
 			if eh_dict.has("tip_mult"):
 				cb.text += " (+%d%% tips)" % int(float(eh_dict.tip_mult) * 100)
+			cb.add_theme_font_size_override("font_size", 16)
 			group_container.add_child(cb)
 			buttons.append(cb)
 			var eh_name: String = String(eh_dict.name)
@@ -351,6 +353,7 @@ func _build_upgrades_panel_body() -> Control:
 		b.text = String(cat).capitalize()
 		b.toggle_mode = true
 		b.button_pressed = (cat == "All")
+		b.add_theme_font_size_override("font_size", 16)
 		b.custom_minimum_size = Vector2(0, 28)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var cat_str: String = cat
@@ -491,6 +494,7 @@ func _upgrade_card(up: Dictionary) -> Control:
 	row_end.add_child(effect_lbl)
 	var buy_btn := Button.new()
 	buy_btn.text = "Buy"
+	buy_btn.add_theme_font_size_override("font_size", 16)
 	buy_btn.custom_minimum_size = Vector2(72, 32)
 	buy_btn.disabled = not affordable
 	var name_str: String = String(up.name)
@@ -563,6 +567,7 @@ func _build_bottom_bar() -> Control:
 
 	_run_show_button = Button.new()
 	_run_show_button.text = "▶ Run Show"
+	_run_show_button.add_theme_font_size_override("font_size", 16)
 	_run_show_button.custom_minimum_size = Vector2(200, 48)
 	_run_show_button.pressed.connect(_on_run_show_pressed)
 	h.add_child(_run_show_button)
@@ -688,8 +693,7 @@ func _enhancements_as_array() -> Array:
 func _label_sized(text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.text = text
-	if font_size != 16:
-		l.add_theme_font_size_override("font_size", font_size)
+	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	return l
 
@@ -697,6 +701,7 @@ func _label_sized(text: String, font_size: int, color: Color) -> Label:
 func _small_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
+	b.add_theme_font_size_override("font_size", 16)
 	b.custom_minimum_size = Vector2(32, 32)
 	return b
 

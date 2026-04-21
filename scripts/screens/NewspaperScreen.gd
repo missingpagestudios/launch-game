@@ -110,6 +110,7 @@ func _ready() -> void:
 
 	var cont := Button.new()
 	cont.text = "Continue to Planning →"
+	cont.add_theme_font_size_override("font_size", 16)
 	cont.custom_minimum_size = Vector2(260, 44)
 	cont.pressed.connect(func() -> void: Router.after_newspaper())
 	var btn_wrap := HBoxContainer.new()

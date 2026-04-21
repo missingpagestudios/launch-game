@@ -79,6 +79,7 @@ func _ready() -> void:
 
 	var cont := Button.new()
 	cont.text = "Continue →"
+	cont.add_theme_font_size_override("font_size", 16)
 	cont.custom_minimum_size = Vector2(220, 48)
 	cont.pressed.connect(func() -> void: Router.after_show())
 	v.add_child(cont)
