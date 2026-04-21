@@ -824,17 +824,20 @@ func _next_unlock_callout(up: Dictionary) -> Control:
 
 
 func _category_tile(cat: String, amber: bool) -> Control:
-	var bg: Color = Color(1.0, 0.722, 0.302, 0.1) if amber else Color(1.0, 1.0, 1.0, 0.05)
-	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(28, 28)
-	wrap.add_theme_stylebox_override("panel", _rounded_style(bg, Color(0, 0, 0, 0), 4))
+	# No box around upgrade-row category icons — just the glyph at 24px
+	# tinted amber when owned, secondary grey otherwise. Wrapped in a
+	# small Control so the VBox/HBox layout reserves a 28px slot.
+	var slot := Control.new()
+	slot.custom_minimum_size = Vector2(28, 28)
 	if CATEGORY_ICONS.has(cat):
 		var center := CenterContainer.new()
-		wrap.add_child(center)
-		var icon := _icon(CATEGORY_ICONS[cat], 18)
+		center.anchor_right = 1.0
+		center.anchor_bottom = 1.0
+		slot.add_child(center)
+		var icon := _icon(CATEGORY_ICONS[cat], 24)
 		icon.modulate = ACCENT_AMBER if amber else TEXT_SECONDARY
 		center.add_child(icon)
-	return wrap
+	return slot
 
 
 func _icon_tinted(path: String, px: int, tint: Color) -> TextureRect:
