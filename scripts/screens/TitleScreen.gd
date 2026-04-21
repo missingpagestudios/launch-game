@@ -44,7 +44,7 @@ const MENU_LABELS := [
 ]
 
 var _menu_buttons: Array[Button] = []
-var _title_label: Label
+var _title_label: Control
 var _subtitle_label: Label
 var _tweens: Array[Tween] = []
 var _entrance_done: bool = false
@@ -188,20 +188,62 @@ func _build_right_column() -> void:
 		menu.add_child(btn)
 
 
-func _build_title() -> Label:
-	var l := Label.new()
-	l.text = "The Last Show"
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	# Bolder Cormorant via variable font weight + synthetic embolden.
+func _build_title() -> Control:
+	# Real bloom via additive blending — stack translucent amber copies
+	# of the text at offset positions behind the clean cream main text.
+	# Overlapping copies sum into a radial glow, identical to how the
+	# firework particles bloom over the sky.
 	var fv := FontVariation.new()
 	fv.base_font = FONT_TITLE_VARIABLE
 	fv.variation_opentype = {"wght": 700}
 	fv.variation_embolden = 0.4
+
+	var wrap := Control.new()
+	wrap.custom_minimum_size = Vector2(0, 120)
+	wrap.size_flags_horizontal = Control.SIZE_FILL
+	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	# Two rings of glow ghosts: an outer diffuse halo and a tighter
+	# inner halo that brightens the glyph edges.
+	var rings := [
+		{"radius": 14.0, "alpha": 0.10},
+		{"radius": 7.0, "alpha": 0.16},
+		{"radius": 3.0, "alpha": 0.22},
+	]
+	for ring in rings:
+		var r: float = float(ring.radius)
+		var a: float = float(ring.alpha)
+		for angle_deg in [0, 45, 90, 135, 180, 225, 270, 315]:
+			var rad: float = deg_to_rad(float(angle_deg))
+			var off := Vector2(cos(rad) * r, sin(rad) * r)
+			wrap.add_child(_title_layer(fv, off, Color(1.0, 0.722, 0.302, a), true))
+
+	# Clean cream main text on top — no offset, normal blend.
+	wrap.add_child(_title_layer(fv, Vector2.ZERO, TEXT_PRIMARY, false))
+	return wrap
+
+
+func _title_layer(fv: FontVariation, offset: Vector2, col: Color, additive: bool) -> Label:
+	var l := Label.new()
+	l.text = "The Last Show"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.add_theme_font_override("font", fv)
 	l.add_theme_font_size_override("font_size", 92)
-	l.add_theme_color_override("font_color", TEXT_PRIMARY)
-	# No glow / outline — Godot Label can't render a real bloom, only
-	# hard strokes. Keeping the text clean reads better than a fake halo.
+	l.add_theme_color_override("font_color", col)
+	l.anchor_left = 0.0
+	l.anchor_right = 1.0
+	l.anchor_top = 0.0
+	l.anchor_bottom = 1.0
+	l.offset_left = offset.x
+	l.offset_right = offset.x
+	l.offset_top = offset.y
+	l.offset_bottom = offset.y
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if additive:
+		var mat := CanvasItemMaterial.new()
+		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		l.material = mat
 	return l
 
 
@@ -220,18 +262,17 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	b.text = text.to_upper()
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	b.custom_minimum_size = Vector2(0, 0)
+	b.custom_minimum_size = Vector2(300, 0)
 	b.focus_mode = Control.FOCUS_ALL
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	# Fill the full column width so the button's right edge (where its
-	# right-aligned text lands) coincides with the title + subtitle
-	# right edge, guaranteeing vertical alignment.
-	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# SHRINK_END pins the button at the right of the column and lets
+	# `position.x` tween freely on hover (EXPAND_FILL overwrites position
+	# every layout pass so the slide animation can't stick there).
+	b.size_flags_horizontal = Control.SIZE_SHRINK_END
 	b.add_theme_font_override("font", FONT_SEMIBOLD if primary else FONT_MEDIUM)
 	b.add_theme_font_size_override("font_size", 18)
 
 	var disabled: bool = (text.to_upper() == "CONTINUE" and not _continue_available())
-	# No primary tint — hover/focus amber is the only state cue.
 	var base_color: Color = TEXT_DIM if disabled else TEXT_MUTED
 	b.add_theme_color_override("font_color", base_color)
 	b.add_theme_color_override("font_hover_color", ACCENT_AMBER)
@@ -250,6 +291,11 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	b.add_theme_stylebox_override("disabled", empty)
 	b.add_theme_stylebox_override("hover_pressed", empty)
 	b.disabled = disabled
+
+	b.mouse_entered.connect(func() -> void: _menu_hover(b, true))
+	b.mouse_exited.connect(func() -> void: _menu_hover(b, false))
+	b.focus_entered.connect(func() -> void: _menu_hover(b, true))
+	b.focus_exited.connect(func() -> void: _menu_hover(b, false))
 
 	b.pressed.connect(func() -> void: _on_menu_select(idx))
 	return b
@@ -303,11 +349,17 @@ func _primary_menu_index() -> int:
 	return 1 if _continue_available() else 0  # Continue > New Game
 
 
-func _menu_hover(_b: Button, _on: bool) -> void:
-	# Slide animation removed — the position shift was pushing buttons
-	# past the column edge and misaligning them with the title. Color
-	# change (amber) is the only hover cue now.
-	pass
+func _menu_hover(b: Button, on: bool) -> void:
+	if b.disabled:
+		return
+	# Slide the button 12px LEFT on hover so the amber label pulls
+	# inward from the column edge instead of sticking out past it.
+	var rest_x: float = b.get_meta("_rest_x", 0.0)
+	var target_x: float = rest_x - 12.0 if on else rest_x
+	var t := create_tween()
+	t.set_ease(Tween.EASE_OUT)
+	t.set_trans(Tween.TRANS_CUBIC)
+	t.tween_property(b, "position:x", target_x, 0.18)
 
 
 # --- entrance animation -----------------------------------------------------
