@@ -351,7 +351,7 @@ func _build_marketing_and_enhancements() -> Control:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_theme_constant_override("separation", 8)
+	v.add_theme_constant_override("separation", 4)
 	scroll.add_child(v)
 
 	v.add_child(_section_label("MARKETING"))
@@ -503,7 +503,7 @@ func _build_upgrades_panel_body() -> Control:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_upgrade_body = VBoxContainer.new()
 	_upgrade_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_upgrade_body.add_theme_constant_override("separation", 6)
+	_upgrade_body.add_theme_constant_override("separation", 4)
 	scroll.add_child(_upgrade_body)
 	v.add_child(scroll)
 	_rebuild_upgrades()
