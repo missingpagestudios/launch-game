@@ -256,13 +256,14 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	b.text = text.to_upper()
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	b.custom_minimum_size = Vector2(300, 0)
 	b.focus_mode = Control.FOCUS_ALL
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	# SHRINK_END pins the button at the right of the column and lets
-	# `position.x` tween freely on hover (EXPAND_FILL overwrites position
-	# every layout pass so the slide animation can't stick there).
-	b.size_flags_horizontal = Control.SIZE_SHRINK_END
+	# SIZE_FILL across the column so the button's right edge is exactly
+	# the column's right edge — same as the title + subtitle labels.
+	# The hover slide now grows the stylebox's content_margin_right
+	# instead of the button position, so alignment at rest is never
+	# disturbed.
+	b.size_flags_horizontal = Control.SIZE_FILL
 	b.add_theme_font_override("font", FONT_SEMIBOLD if primary else FONT_MEDIUM)
 	b.add_theme_font_size_override("font_size", 18)
 
@@ -273,21 +274,23 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	b.add_theme_color_override("font_focus_color", ACCENT_AMBER)
 	b.add_theme_color_override("font_pressed_color", ACCENT_AMBER)
 	b.add_theme_color_override("font_disabled_color", TEXT_DIM)
-	var empty := StyleBoxEmpty.new()
-	empty.content_margin_left = 0
-	empty.content_margin_right = 0
-	empty.content_margin_top = 8
-	empty.content_margin_bottom = 8
-	b.add_theme_stylebox_override("normal", empty)
-	b.add_theme_stylebox_override("hover", empty)
-	b.add_theme_stylebox_override("pressed", empty)
-	b.add_theme_stylebox_override("focus", empty)
-	b.add_theme_stylebox_override("disabled", empty)
-	b.add_theme_stylebox_override("hover_pressed", empty)
+
+	# Dedicated stylebox per button so we can tween its content_margin_right
+	# on hover without affecting siblings.
+	var box := StyleBoxEmpty.new()
+	box.content_margin_left = 0
+	box.content_margin_right = 0
+	box.content_margin_top = 8
+	box.content_margin_bottom = 8
+	b.add_theme_stylebox_override("normal", box)
+	b.add_theme_stylebox_override("hover", box)
+	b.add_theme_stylebox_override("pressed", box)
+	b.add_theme_stylebox_override("focus", box)
+	b.add_theme_stylebox_override("disabled", box)
+	b.add_theme_stylebox_override("hover_pressed", box)
+	b.set_meta("_style", box)
 	b.disabled = disabled
 
-	# Slide only on mouse hover — keyboard focus still recolours via
-	# font_focus_color but leaves the column edge aligned.
 	b.mouse_entered.connect(func() -> void: _menu_hover(b, true))
 	b.mouse_exited.connect(func() -> void: _menu_hover(b, false))
 
@@ -346,14 +349,17 @@ func _primary_menu_index() -> int:
 func _menu_hover(b: Button, on: bool) -> void:
 	if b.disabled:
 		return
-	# Slide the button 12px LEFT on hover so the amber label pulls
-	# inward from the column edge instead of sticking out past it.
-	var rest_x: float = b.get_meta("_rest_x", 0.0)
-	var target_x: float = rest_x - 12.0 if on else rest_x
+	# Grow content_margin_right to pull the right-aligned text inward
+	# from the column edge. Button rect stays put so every menu item's
+	# right edge remains aligned with the title / subtitle column.
+	var style: StyleBoxEmpty = b.get_meta("_style", null)
+	if style == null:
+		return
+	var target: float = 12.0 if on else 0.0
 	var t := create_tween()
 	t.set_ease(Tween.EASE_OUT)
 	t.set_trans(Tween.TRANS_CUBIC)
-	t.tween_property(b, "position:x", target_x, 0.18)
+	t.tween_property(style, "content_margin_right", target, 0.18)
 
 
 # --- entrance animation -----------------------------------------------------
@@ -363,7 +369,6 @@ func _prime_and_animate_entrance() -> void:
 	_subtitle_label.modulate.a = 0.0
 	for b in _menu_buttons:
 		b.modulate.a = 0.0
-		# Record initial x so hover tween can return to it cleanly.
 		b.set_meta("_rest_x", b.position.x)
 		b.position.x += 60.0
 
