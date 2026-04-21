@@ -211,7 +211,7 @@ func _night_info_block() -> Control:
 	# MarginContainer with 1px top pad so the row visually aligns with
 	# the VT323 logo's baseline (Inter sits slightly higher otherwise).
 	var shift := MarginContainer.new()
-	shift.add_theme_constant_override("margin_top", 1)
+	shift.add_theme_constant_override("margin_top", 2)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -224,6 +224,9 @@ func _night_info_block() -> Control:
 
 
 func _zone_pill() -> Control:
+	var shift := MarginContainer.new()
+	shift.add_theme_constant_override("margin_top", 2)
+
 	var wrap := PanelContainer.new()
 	var style := _rounded_style(ACCENT_AMBER_DIM, BORDER_AMBER, 4)
 	style.content_margin_left = 14
@@ -243,7 +246,8 @@ func _zone_pill() -> Control:
 	var zone_name := String(BalanceConfig.get_zone(GameState.current_zone).get("name", ""))
 	var name_label := _inter_label(zone_name, SIZE_ITEM, FONT_MEDIUM, TEXT_PRIMARY)
 	h.add_child(name_label)
-	return wrap
+	shift.add_child(wrap)
+	return shift
 
 
 func _fans_block() -> Control:
