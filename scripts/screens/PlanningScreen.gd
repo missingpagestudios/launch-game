@@ -82,6 +82,7 @@ var _enhancements: Dictionary = {}   # category -> name
 var _upgrade_buys: Array[String] = []
 var _upgrade_category_filter: String = "All"
 
+var _firework_info_dialog: AcceptDialog
 var _cash_label: Label
 var _fans_label: Label
 var _fans_progress: Control
@@ -368,6 +369,10 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	right.add_child(minus)
 	right.add_child(qty_lbl)
 	right.add_child(plus)
+
+	var info_btn := _info_button()
+	info_btn.pressed.connect(func() -> void: _show_firework_info(fw))
+	right.add_child(info_btn)
 
 	var cost_preview := _label_sized("", SIZE_STATS, GOLD)
 	cost_preview.custom_minimum_size = Vector2(56, 0)
@@ -925,6 +930,65 @@ func _icon(path: String, px: int) -> TextureRect:
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return t
+
+
+func _info_button() -> Button:
+	var b := Button.new()
+	b.text = "i"
+	b.add_theme_font_size_override("font_size", SIZE_STATS)
+	b.add_theme_color_override("font_color", MUTED)
+	b.add_theme_color_override("font_hover_color", GOLD)
+	b.add_theme_stylebox_override("normal", _button_style(
+		Color(0.039, 0.063, 0.157, 0.5), Color(DIM.r, DIM.g, DIM.b, 0.9)))
+	b.add_theme_stylebox_override("hover", _button_style(
+		Color(0.165, 0.188, 0.333, 0.8), GOLD_BORDER))
+	b.add_theme_stylebox_override("pressed", _button_style(
+		Color(0.165, 0.188, 0.333, 0.95), GOLD_BORDER))
+	b.custom_minimum_size = Vector2(28, 28)
+	b.tooltip_text = "Details"
+	return b
+
+
+func _show_firework_info(fw: Dictionary) -> void:
+	if _firework_info_dialog == null:
+		_firework_info_dialog = AcceptDialog.new()
+		_firework_info_dialog.title = "Firework"
+		_firework_info_dialog.min_size = Vector2(460, 0)
+		add_child(_firework_info_dialog)
+
+	var tier: int = int(fw.get("tier", 1))
+	var cost: int = int(fw.get("cost", 0))
+	var engagement: int = int(fw.get("engagement", 0))
+	var tags: Array = fw.get("tags", [])
+	var tag_str: String = ", ".join(tags) if not tags.is_empty() else "—"
+	var unlock_desc: String = String(fw.get("unlock_description", ""))
+
+	var body := "[b]%s[/b]\n" % String(fw.name)
+	body += "Tier %d   ·   $%s per unit   ·   %d engagement per unit\n\n" % [
+		tier, _fmt_num(cost), engagement]
+	body += "[b]Tags:[/b] %s\n\n" % tag_str
+	body += ("[b]Engagement[/b] is how much excitement each firework adds to the show. "
+			+ "Total engagement across all fireworks fired feeds the quality multiplier, "
+			+ "which drives both star rating and how many attendees become repeat fans. "
+			+ "More engagement per attendee → better show.\n")
+	if unlock_desc != "":
+		body += "\n[b]Unlock:[/b] %s" % unlock_desc
+
+	_firework_info_dialog.title = String(fw.name)
+	_firework_info_dialog.dialog_text = ""  # unused — we use a RichTextLabel child
+	for child in _firework_info_dialog.get_children():
+		if child is RichTextLabel:
+			child.queue_free()
+	var rt := RichTextLabel.new()
+	rt.bbcode_enabled = true
+	rt.fit_content = true
+	rt.custom_minimum_size = Vector2(420, 0)
+	rt.add_theme_font_size_override("normal_font_size", SIZE_STATS)
+	rt.add_theme_font_size_override("bold_font_size", SIZE_STATS)
+	rt.add_theme_color_override("default_color", TEXT)
+	rt.text = body
+	_firework_info_dialog.add_child(rt)
+	_firework_info_dialog.popup_centered()
 
 
 func _qty_button(text: String) -> Button:
