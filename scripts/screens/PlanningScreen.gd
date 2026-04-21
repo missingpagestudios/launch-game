@@ -85,8 +85,6 @@ var _upgrade_category_filter: String = "All"
 var _firework_info_dialog: AcceptDialog
 var _cash_label: Label
 var _fans_label: Label
-var _fans_progress: Control
-var _fans_next_label: Label
 var _run_show_button: Button
 var _summary_label: Label
 var _spend_label: Label
@@ -184,66 +182,29 @@ func _build_top_bar() -> Control:
 
 
 func _build_top_bar_stats() -> Control:
-	# Two compact rows: cash (prominent gold) above fans-with-progress
-	# and next-zone hint combined on one line.
+	# Two simple rows: money icon + cash total, then fans icon + fan total.
+	# Both numbers use the same gold treatment — the icons tell you which
+	# stat each row is.
 	var v := VBoxContainer.new()
-	v.custom_minimum_size = Vector2(340, 0)
+	v.custom_minimum_size = Vector2(200, 0)
 	v.add_theme_constant_override("separation", 4)
 
 	var cash_row := HBoxContainer.new()
 	cash_row.alignment = BoxContainer.ALIGNMENT_END
 	cash_row.add_theme_constant_override("separation", 8)
 	cash_row.add_child(_icon(ICON_MONEY, 24))
-	_cash_label = _label_sized("$%s" % _fmt_num(int(GameState.money)), SIZE_TOPBAR, GOLD)
+	_cash_label = _label_sized(_fmt_num(int(GameState.money)), SIZE_TOPBAR, GOLD)
 	cash_row.add_child(_cash_label)
 	v.add_child(cash_row)
 
 	var fans_row := HBoxContainer.new()
 	fans_row.alignment = BoxContainer.ALIGNMENT_END
-	fans_row.add_theme_constant_override("separation", 6)
-	fans_row.add_child(_icon(ICON_FANS, 16))
-
-	var next_zone: Dictionary = BalanceConfig.get_zone(GameState.current_zone + 1)
-	var next_threshold: int = int(next_zone.get("threshold_repeat_fans", 0)) if not next_zone.is_empty() else 0
-	var fans_text: String = ""
-	if next_threshold > 0:
-		fans_text = "%s / %s" % [_fmt_num(GameState.repeat_fans), _fmt_num(next_threshold)]
-	else:
-		fans_text = "%s" % _fmt_num(GameState.repeat_fans)
-	_fans_label = _label_sized(fans_text, SIZE_CAPTION, MUTED)
+	fans_row.add_theme_constant_override("separation", 8)
+	fans_row.add_child(_icon(ICON_FANS, 20))
+	_fans_label = _label_sized(_fmt_num(GameState.repeat_fans), SIZE_BODY, GOLD)
 	fans_row.add_child(_fans_label)
-
-	_fans_progress = _build_progress_bar(next_threshold, GameState.repeat_fans)
-	fans_row.add_child(_fans_progress)
-
-	var next_name := String(next_zone.get("name", "")) if not next_zone.is_empty() else ""
-	if next_name != "":
-		_fans_next_label = _label_sized("→ %s" % next_name, SIZE_CAPTION, DIM)
-	else:
-		_fans_next_label = _label_sized("final zone", SIZE_CAPTION, DIM)
-	fans_row.add_child(_fans_next_label)
 	v.add_child(fans_row)
 	return v
-
-
-func _build_progress_bar(threshold: int, current: int) -> Control:
-	var holder := Control.new()
-	holder.custom_minimum_size = Vector2(80, 4)
-	var track := ColorRect.new()
-	track.color = Color(0.039, 0.063, 0.157, 0.9)
-	track.anchor_right = 1.0
-	track.anchor_bottom = 1.0
-	holder.add_child(track)
-	var fill := ColorRect.new()
-	fill.color = GOLD
-	fill.anchor_bottom = 1.0
-	fill.anchor_right = 0.0
-	var pct: float = 0.0
-	if threshold > 0:
-		pct = clampf(float(current) / float(threshold), 0.0, 1.0)
-	fill.size = Vector2(80.0 * pct, 4.0)
-	holder.add_child(fill)
-	return holder
 
 
 # --- panels row --------------------------------------------------------------
