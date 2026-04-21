@@ -109,7 +109,7 @@ func _ready() -> void:
 	root.add_child(_build_top_bar())
 	root.add_child(_strip(16))
 	root.add_child(_build_panels())
-	root.add_child(_strip(120))
+	root.add_child(_strip(100))
 	root.add_child(_build_bottom_bar())
 
 	_refresh_totals()
@@ -152,7 +152,7 @@ func _fill_texture(path: String) -> TextureRect:
 
 func _build_top_bar() -> Control:
 	var bar := PanelContainer.new()
-	bar.custom_minimum_size = Vector2(0, 60)
+	bar.custom_minimum_size = Vector2(0, 80)
 	bar.add_theme_stylebox_override("panel", _panel_style(TOP_BAR_BG))
 
 	var outer := MarginContainer.new()
@@ -184,11 +184,12 @@ func _build_top_bar() -> Control:
 
 
 func _build_top_bar_stats() -> Control:
+	# Two compact rows: cash (prominent gold) above fans-with-progress
+	# and next-zone hint combined on one line.
 	var v := VBoxContainer.new()
-	v.custom_minimum_size = Vector2(280, 0)
+	v.custom_minimum_size = Vector2(340, 0)
 	v.add_theme_constant_override("separation", 4)
 
-	# Cash row: money icon + amount, right-aligned
 	var cash_row := HBoxContainer.new()
 	cash_row.alignment = BoxContainer.ALIGNMENT_END
 	cash_row.add_theme_constant_override("separation", 8)
@@ -197,7 +198,6 @@ func _build_top_bar_stats() -> Control:
 	cash_row.add_child(_cash_label)
 	v.add_child(cash_row)
 
-	# Fans row: icon + current/threshold + progress + next-zone hint
 	var fans_row := HBoxContainer.new()
 	fans_row.alignment = BoxContainer.ALIGNMENT_END
 	fans_row.add_theme_constant_override("separation", 6)
@@ -210,18 +210,19 @@ func _build_top_bar_stats() -> Control:
 		fans_text = "%s / %s" % [_fmt_num(GameState.repeat_fans), _fmt_num(next_threshold)]
 	else:
 		fans_text = "%s" % _fmt_num(GameState.repeat_fans)
-	_fans_label = _label_sized(fans_text, SIZE_STATS, MUTED)
+	_fans_label = _label_sized(fans_text, SIZE_CAPTION, MUTED)
 	fans_row.add_child(_fans_label)
 
 	_fans_progress = _build_progress_bar(next_threshold, GameState.repeat_fans)
 	fans_row.add_child(_fans_progress)
-	v.add_child(fans_row)
 
 	var next_name := String(next_zone.get("name", "")) if not next_zone.is_empty() else ""
-	var next_label: String = "next: %s" % next_name if next_name != "" else "final zone"
-	_fans_next_label = _label_sized(next_label, SIZE_CAPTION, DIM)
-	_fans_next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	v.add_child(_fans_next_label)
+	if next_name != "":
+		_fans_next_label = _label_sized("→ %s" % next_name, SIZE_CAPTION, DIM)
+	else:
+		_fans_next_label = _label_sized("final zone", SIZE_CAPTION, DIM)
+	fans_row.add_child(_fans_next_label)
+	v.add_child(fans_row)
 	return v
 
 
