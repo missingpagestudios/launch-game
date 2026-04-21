@@ -1318,6 +1318,9 @@ func _run_show_primary() -> Button:
 		Color(1.0, 0.722, 0.302, 0.30),
 		6, 0, 28))
 	b.custom_minimum_size = Vector2(160, 40)
+	# Without this, the bottom bar's HBox stretches the button to fill
+	# the full bar height. SHRINK_CENTER keeps it at its 40px minimum.
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return b
 
 
@@ -1334,6 +1337,7 @@ func _menu_button() -> Button:
 	b.add_theme_stylebox_override("pressed", _icon_button_style(
 		Color(1.0, 1.0, 1.0, 0.08), Color(0, 0, 0, 0)))
 	b.custom_minimum_size = Vector2(40, 40)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return b
 
 
