@@ -59,6 +59,10 @@ func _ready() -> void:
 	debug.pressed.connect(_on_debug_autorun_pressed)
 	v.add_child(debug)
 
+	var fw := _menu_button("Fireworks Demo")
+	fw.pressed.connect(func() -> void: Router.go_fireworks_demo())
+	v.add_child(fw)
+
 	var quit := _menu_button("Quit")
 	quit.pressed.connect(func() -> void: get_tree().quit())
 	v.add_child(quit)
@@ -120,7 +124,7 @@ func _run_smoke_and_quit() -> void:
 	}
 	GameState.pending_newspaper = NewspaperContent.build_article(GameState.last_night_results)
 	GameState.ending_type = "zone_1_finale"
-	for path in [Router.PLANNING, Router.SHOW, Router.NEWSPAPER, Router.DONATION, Router.ENDING]:
+	for path in [Router.PLANNING, Router.SHOW, Router.NEWSPAPER, Router.DONATION, Router.ENDING, Router.FIREWORKS_DEMO]:
 		var packed: PackedScene = load(path)
 		assert(packed != null, "failed to load %s" % path)
 		var instance: Node = packed.instantiate()

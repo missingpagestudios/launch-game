@@ -8,10 +8,15 @@ const SHOW := "res://scenes/show.tscn"
 const NEWSPAPER := "res://scenes/newspaper.tscn"
 const DONATION := "res://scenes/donation.tscn"
 const ENDING := "res://scenes/ending.tscn"
+const FIREWORKS_DEMO := "res://scenes/fireworks_demo.tscn"
 
 
 func go_title() -> void:
 	get_tree().change_scene_to_file(TITLE)
+
+
+func go_fireworks_demo() -> void:
+	get_tree().change_scene_to_file(FIREWORKS_DEMO)
 
 
 func start_new_run() -> void:
