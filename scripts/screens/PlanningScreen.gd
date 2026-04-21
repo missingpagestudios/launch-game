@@ -225,7 +225,7 @@ func _build_fireworks_list() -> Control:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 12)
 	scroll.add_child(v)
 
 	var fireworks: Array = GameEngine.available_fireworks().duplicate()
@@ -242,19 +242,19 @@ func _build_firework_card(fw: Dictionary) -> Control:
 	var cost: int = int(fw.get("cost", 0))
 	var affordable: bool = float(cost) <= GameState.money
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 92)
+	wrap.custom_minimum_size = Vector2(0, 118)
 	var style := _card_style(CARD_AFFORDABLE if affordable else CARD_UNAFFORDABLE)
 	wrap.add_theme_stylebox_override("panel", style)
 
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 12)
-	pad.add_theme_constant_override("margin_right", 12)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
+	pad.add_theme_constant_override("margin_left", 16)
+	pad.add_theme_constant_override("margin_right", 16)
+	pad.add_theme_constant_override("margin_top", 16)
+	pad.add_theme_constant_override("margin_bottom", 16)
 	wrap.add_child(pad)
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 0)
 	pad.add_child(v)
 
 	var row_name := HBoxContainer.new()
@@ -265,12 +265,16 @@ func _build_firework_card(fw: Dictionary) -> Control:
 	row_name.add_child(_tier_badge(int(fw.get("tier", 1))))
 	v.add_child(row_name)
 
+	v.add_child(_strip(8))
+
 	var tags: Array = fw.get("tags", [])
 	var stats_line: String = "$%s · %d eng" % [_fmt_num(cost), int(fw.get("engagement", 0))]
 	if not tags.is_empty():
 		stats_line += " · " + ", ".join(tags)
 	var stats_lbl: Label = _label_sized(stats_line, SIZE_STATS, TEXT if affordable else MUTED)
 	v.add_child(stats_lbl)
+
+	v.add_child(_strip(10))
 
 	var row_ctrl := HBoxContainer.new()
 	row_ctrl.add_theme_constant_override("separation", 6)
@@ -331,7 +335,7 @@ func _build_marketing_and_enhancements() -> Control:
 	mk_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var mk_v := VBoxContainer.new()
 	mk_v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mk_v.add_theme_constant_override("separation", 4)
+	mk_v.add_theme_constant_override("separation", 10)
 	mk_scroll.add_child(mk_v)
 	v.add_child(mk_scroll)
 
@@ -354,6 +358,7 @@ func _build_marketing_and_enhancements() -> Control:
 	for category in groups.keys():
 		eh_v.add_child(_label_sized(String(category).capitalize(), SIZE_CAPTION, MUTED))
 		var group_container := VBoxContainer.new()
+		group_container.add_theme_constant_override("separation", 10)
 		eh_v.add_child(group_container)
 
 		var none_btn := CheckBox.new()
@@ -386,18 +391,18 @@ func _build_marketing_and_enhancements() -> Control:
 
 func _build_marketing_card(mk: Dictionary) -> Control:
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 70)
+	wrap.custom_minimum_size = Vector2(0, 88)
 	wrap.add_theme_stylebox_override("panel", _card_style(CARD_AFFORDABLE))
 
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 12)
-	pad.add_theme_constant_override("margin_right", 12)
-	pad.add_theme_constant_override("margin_top", 6)
-	pad.add_theme_constant_override("margin_bottom", 6)
+	pad.add_theme_constant_override("margin_left", 16)
+	pad.add_theme_constant_override("margin_right", 16)
+	pad.add_theme_constant_override("margin_top", 16)
+	pad.add_theme_constant_override("margin_bottom", 16)
 	wrap.add_child(pad)
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 6)
 	pad.add_child(v)
 
 	var row_top := HBoxContainer.new()
@@ -412,6 +417,7 @@ func _build_marketing_card(mk: Dictionary) -> Control:
 		int(mk.get("cap", 0)),
 	]
 	v.add_child(_label_sized(effect_text, SIZE_CAPTION, MUTED))
+	v.add_child(_strip(2))
 
 	var row_ctrl := HBoxContainer.new()
 	row_ctrl.add_theme_constant_override("separation", 6)
@@ -461,7 +467,7 @@ func _build_upgrades_panel_body() -> Control:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_upgrade_body = VBoxContainer.new()
 	_upgrade_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_upgrade_body.add_theme_constant_override("separation", 6)
+	_upgrade_body.add_theme_constant_override("separation", 12)
 	scroll.add_child(_upgrade_body)
 	v.add_child(scroll)
 	_rebuild_upgrades()
@@ -547,19 +553,19 @@ func _upgrade_card(up: Dictionary) -> Control:
 	var cost: int = int(up.get("cost", 0))
 	var affordable: bool = float(cost) <= GameState.money
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 96)
+	wrap.custom_minimum_size = Vector2(0, 110)
 	var style := _card_style(CARD_AFFORDABLE if affordable else CARD_UNAFFORDABLE)
 	wrap.add_theme_stylebox_override("panel", style)
 
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 12)
-	pad.add_theme_constant_override("margin_right", 12)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
+	pad.add_theme_constant_override("margin_left", 16)
+	pad.add_theme_constant_override("margin_right", 16)
+	pad.add_theme_constant_override("margin_top", 16)
+	pad.add_theme_constant_override("margin_bottom", 16)
 	wrap.add_child(pad)
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 6)
 	pad.add_child(v)
 
 	var row_name := HBoxContainer.new()
