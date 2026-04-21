@@ -129,12 +129,6 @@ func _ready() -> void:
 	root.add_child(_strip(16))
 	root.add_child(_build_bottom_bar())
 
-	_warning_label = _inter_label("", SIZE_BODY, FONT_SEMIBOLD, STATE_WARN)
-	_warning_label.position = Vector2(32, 664)
-	_warning_label.modulate = Color(1, 1, 1, 0)
-	_warning_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_warning_label)
-
 	_refresh_totals()
 
 
@@ -917,14 +911,19 @@ func _build_bottom_bar() -> Control:
 
 	var left := VBoxContainer.new()
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.add_theme_constant_override("separation", 4)
+	left.add_theme_constant_override("separation", 2)
 	_summary_hint = _inter_label(
 		"SELECT FIREWORKS TO CONTINUE", SIZE_LABEL, FONT_REGULAR, TEXT_DIM)
 	_summary_main = _inter_label(
 		"Spend $0 · Cash $%s" % _fmt_num(int(GameState.money)),
 		SIZE_BODY_SM, FONT_REGULAR, TEXT_SECONDARY)
+	# Warning slot sits beneath the spend/cash line; empty text reserves
+	# the row height so the summary doesn't jump when the warning pops.
+	_warning_label = _inter_label(" ", SIZE_LABEL, FONT_SEMIBOLD, STATE_WARN)
+	_warning_label.modulate = Color(1, 1, 1, 0)
 	left.add_child(_summary_hint)
 	left.add_child(_summary_main)
+	left.add_child(_warning_label)
 	h.add_child(left)
 
 	# Gap between summary and right-side controls.
