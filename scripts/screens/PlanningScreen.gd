@@ -66,6 +66,13 @@ const CATEGORY_ICONS := {
 }
 
 const UPGRADE_CATEGORIES := ["All", "crew", "infrastructure", "revenue", "marketing"]
+const UPGRADE_CATEGORY_LABELS := {
+	"All": "All",
+	"crew": "Crew",
+	"infrastructure": "Infra",
+	"revenue": "Rev",
+	"marketing": "Mkt",
+}
 
 # --- state --------------------------------------------------------------------
 
@@ -335,22 +342,22 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	# name
 	var name_color: Color = TEXT if affordable else MUTED
 	var name_lbl := _label_sized(String(fw.name), SIZE_BODY, name_color)
+	name_lbl.clip_text = true
+	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	content.add_child(name_lbl)
 
 	# tier icon
 	var tier_icon := _icon(TIER_ICONS.get(tier, TIER_ICONS[1]), 24)
 	content.add_child(tier_icon)
 
-	content.add_child(_hspacer(4))
-
-	# stats line
-	var tags: Array = fw.get("tags", [])
-	var tag_str: String = ", ".join(tags) if not tags.is_empty() else ""
-	var stats_text: String = "$%s · %d eng%s" % [
-		_fmt_num(cost), int(fw.get("engagement", 0)),
-		(" · " + tag_str) if tag_str != "" else ""]
+	# stats line (cost + engagement only — tags are too wide for 400px rows)
+	var stats_text: String = "$%s · %d eng" % [
+		_fmt_num(cost), int(fw.get("engagement", 0))]
 	var stats_lbl := _label_sized(stats_text, SIZE_STATS, MUTED if affordable else DIM)
 	stats_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	stats_lbl.clip_text = true
+	stats_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	content.add_child(stats_lbl)
 
 	# stepper
@@ -365,8 +372,9 @@ func _build_firework_row(fw: Dictionary) -> Control:
 
 	# cost preview
 	var cost_preview := _label_sized("", SIZE_STATS, GOLD)
-	cost_preview.custom_minimum_size = Vector2(72, 0)
+	cost_preview.custom_minimum_size = Vector2(64, 0)
 	cost_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cost_preview.clip_text = true
 	content.add_child(cost_preview)
 
 	var entry := {
@@ -472,8 +480,10 @@ func _build_enhancement_category(category: String, options: Array) -> Control:
 	v.add_theme_constant_override("separation", 6)
 	v.add_child(_label_sized(category.capitalize() + ":", SIZE_STATS, MUTED))
 
-	var flow := HBoxContainer.new()
-	flow.add_theme_constant_override("separation", 6)
+	# HFlowContainer wraps pills to the next row when the panel width runs out.
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 6)
 
 	var pills: Array[Button] = []
 	var none_pill := _pill("None", true)
@@ -511,10 +521,11 @@ func _build_upgrades_panel_body() -> Control:
 	var category_group: Array[Button] = []
 	for cat in UPGRADE_CATEGORIES:
 		var b := Button.new()
-		b.text = String(cat).capitalize()
+		b.text = String(UPGRADE_CATEGORY_LABELS.get(cat, cat))
+		b.clip_text = true
 		b.toggle_mode = true
 		b.button_pressed = (cat == "All")
-		b.add_theme_font_size_override("font_size", SIZE_SMALL)
+		b.add_theme_font_size_override("font_size", SIZE_CAPTION)
 		b.custom_minimum_size = Vector2(0, 32)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var cat_str: String = cat
@@ -685,6 +696,8 @@ func _upgrade_card(up: Dictionary) -> Control:
 	var effect_lbl := _label_sized(
 		_effect_summary(up.get("effect", {})), SIZE_STATS, MUTED)
 	effect_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	effect_lbl.clip_text = true
+	effect_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	row_end.add_child(effect_lbl)
 
 	var buy_btn := _buy_button()
