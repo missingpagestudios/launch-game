@@ -314,7 +314,7 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	var affordable: bool = float(cost) <= GameState.money
 
 	var wrap := PanelContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 76)
+	wrap.custom_minimum_size = Vector2(0, 56)
 	var style := _row_style(ROW_BG if affordable else ROW_BG_UNAFFORD)
 	wrap.add_theme_stylebox_override("panel", style)
 
@@ -331,55 +331,48 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.add_theme_constant_override("margin_left", 12)
 	pad.add_theme_constant_override("margin_right", 12)
-	pad.add_theme_constant_override("margin_top", 10)
-	pad.add_theme_constant_override("margin_bottom", 10)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
 	outer.add_child(pad)
 
 	var content := HBoxContainer.new()
 	content.add_theme_constant_override("separation", 10)
 	pad.add_child(content)
 
-	# Left column: name on top (white), price underneath (muted).
-	var left := VBoxContainer.new()
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.add_theme_constant_override("separation", 2)
-	var name_color: Color = TEXT if affordable else MUTED
-	var name_lbl := _label_sized(String(fw.name), SIZE_BODY, name_color)
+	# Name — flexible width, ellipsises if the firework name is long.
+	var name_lbl := _label_sized(String(fw.name), SIZE_BODY, TEXT if affordable else MUTED)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lbl.clip_text = true
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	left.add_child(name_lbl)
-	var price_text: String = "$%s  ·  %d eng" % [_fmt_num(cost), int(fw.get("engagement", 0))]
-	var price_lbl := _label_sized(price_text, SIZE_STATS, MUTED if affordable else DIM)
-	price_lbl.clip_text = true
-	price_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	left.add_child(price_lbl)
-	content.add_child(left)
+	content.add_child(name_lbl)
 
-	# Right column: tier icon + stepper + cost preview.
-	var right := HBoxContainer.new()
-	right.add_theme_constant_override("separation", 6)
-	right.alignment = BoxContainer.ALIGNMENT_END
-	var tier_icon := _icon(TIER_ICONS.get(tier, TIER_ICONS[1]), 24)
-	right.add_child(tier_icon)
+	# Per-unit price, right-aligned in its own fixed-width slot so stepper
+	# lines up regardless of price length.
+	var price_lbl := _label_sized("$%s" % _fmt_num(cost), SIZE_STATS, GOLD if affordable else MUTED)
+	price_lbl.custom_minimum_size = Vector2(64, 0)
+	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	price_lbl.clip_text = true
+	content.add_child(price_lbl)
+
+	# Stepper: [-] qty [+]
 	var minus := _qty_button("-")
 	var qty_lbl := _label_sized("0", SIZE_STATS, MUTED)
 	qty_lbl.custom_minimum_size = Vector2(24, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _qty_button("+")
-	right.add_child(minus)
-	right.add_child(qty_lbl)
-	right.add_child(plus)
+	content.add_child(minus)
+	content.add_child(qty_lbl)
+	content.add_child(plus)
 
+	# Info
 	var info_btn := _info_button()
 	info_btn.pressed.connect(func() -> void: _show_firework_info(fw))
-	right.add_child(info_btn)
+	content.add_child(info_btn)
 
-	var cost_preview := _label_sized("", SIZE_STATS, GOLD)
-	cost_preview.custom_minimum_size = Vector2(56, 0)
-	cost_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	cost_preview.clip_text = true
-	right.add_child(cost_preview)
-	content.add_child(right)
+	# Cost preview is now in the info popup / footer — keep a hidden label
+	# for the stepper handler to keep updating without layout impact.
+	var cost_preview := Label.new()
+	cost_preview.visible = false
 
 	var entry := {
 		"fw": fw, "wrap": wrap, "style": style, "stripe": stripe,
