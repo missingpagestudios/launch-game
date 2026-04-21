@@ -255,6 +255,9 @@ func _panel(title: String, body: Control, width: int) -> Control:
 func _row_shell(stripe_color: Color, bg: Color) -> Dictionary:
 	var wrap := PanelContainer.new()
 	wrap.custom_minimum_size = Vector2(0, ROW_HEIGHT)
+	# Rows live in VBoxes whose parent ScrollContainer can stretch them to
+	# fill unused space. SHRINK_CENTER forces each row to stay at min height.
+	wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var style := _row_style(bg)
 	wrap.add_theme_stylebox_override("panel", style)
 
@@ -276,6 +279,7 @@ func _row_shell(stripe_color: Color, bg: Color) -> Dictionary:
 	outer.add_child(pad)
 
 	var content := HBoxContainer.new()
+	content.custom_minimum_size = Vector2(0, 32)
 	content.add_theme_constant_override("separation", 8)
 	pad.add_child(content)
 
@@ -289,6 +293,8 @@ func _build_fireworks_list() -> Control:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_theme_constant_override("separation", 4)
 	scroll.add_child(v)
 
@@ -351,6 +357,8 @@ func _build_marketing_and_enhancements() -> Control:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_theme_constant_override("separation", 4)
 	scroll.add_child(v)
 
@@ -503,6 +511,8 @@ func _build_upgrades_panel_body() -> Control:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_upgrade_body = VBoxContainer.new()
 	_upgrade_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_upgrade_body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_upgrade_body.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_upgrade_body.add_theme_constant_override("separation", 4)
 	scroll.add_child(_upgrade_body)
 	v.add_child(scroll)
@@ -1064,8 +1074,8 @@ func _button_style(fill: Color, border: Color) -> StyleBoxFlat:
 	sb.border_width_bottom = 1
 	sb.content_margin_left = 10
 	sb.content_margin_right = 10
-	sb.content_margin_top = 4
-	sb.content_margin_bottom = 4
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 2
 	return sb
 
 
