@@ -111,6 +111,7 @@ func _ready() -> void:
 	root.add_child(_build_top_bar())
 	root.add_child(_strip(10))
 	root.add_child(_build_panels())
+	root.add_child(_strip(12))
 	root.add_child(_build_bottom_bar())
 
 	_refresh_totals()
@@ -211,7 +212,7 @@ func _build_top_bar_stats() -> Control:
 
 func _build_panels() -> Control:
 	var margin := MarginContainer.new()
-	margin.custom_minimum_size = Vector2(0, 580)
+	margin.custom_minimum_size = Vector2(0, 568)
 	margin.add_theme_constant_override("margin_left", 32)
 	margin.add_theme_constant_override("margin_right", 32)
 
@@ -800,6 +801,7 @@ func _rebuild_planning() -> void:
 	root.add_child(_build_top_bar())
 	root.add_child(_strip(10))
 	root.add_child(_build_panels())
+	root.add_child(_strip(12))
 	root.add_child(_build_bottom_bar())
 
 
