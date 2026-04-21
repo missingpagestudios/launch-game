@@ -6,9 +6,19 @@ config_version=5
 
 config/name="LAUNCH"
 config/description="100-night narrative incremental about building a fireworks career. Stage 2: text-only loop validation."
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+BalanceConfig="*res://scripts/autoload/BalanceConfig.gd"
+MetaState="*res://scripts/autoload/MetaState.gd"
+GameState="*res://scripts/autoload/GameState.gd"
+GameEngine="*res://scripts/autoload/GameEngine.gd"
+NewspaperContent="*res://scripts/autoload/NewspaperContent.gd"
+DebugAutoRun="*res://scripts/autoload/DebugAutoRun.gd"
+Router="*res://scripts/autoload/Router.gd"
 
 [display]
 
