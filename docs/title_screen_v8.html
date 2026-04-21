@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>THE LAST SHOW — Title Screen Wireframe v8</title>
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        background: #000;
+        color: #F0F0F0;
+        font-family: 'Inter', sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .canvas {
+        width: 1280px;
+        height: 720px;
+        position: relative;
+        /* Placeholder gradient — in Godot, replace with zone_6_mountain_vista.png */
+        background: linear-gradient(180deg, #050810 0%, #0A0E1E 30%, #13182A 55%, #1F2940 75%, #2B3A5C 100%);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .background-layers {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    
+    .stars {
+        position: absolute;
+        inset: 0;
+    }
+    
+    .star {
+        position: absolute;
+        background: #FFFFFF;
+        border-radius: 50%;
+        animation: twinkle 4s infinite ease-in-out;
+    }
+    
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.9; }
+    }
+    
+    /* Background placeholder note */
+    .bg-note {
+        position: absolute;
+        top: 50%;
+        left: 25%;
+        transform: translate(-50%, -50%);
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.2);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-align: center;
+    }
+    
+    /* Distant valley city lights — biased to left */
+    .city-lights {
+        position: absolute;
+        bottom: 35%;
+        left: 0;
+        right: 40%;
+        height: 8%;
+        background: radial-gradient(ellipse at 40% 50%, 
+            rgba(255, 184, 77, 0.2) 0%, 
+            rgba(255, 184, 77, 0.08) 40%, 
+            transparent 70%);
+    }
+    
+    .city-dot {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: #FFB84D;
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: flicker 3s infinite;
+    }
+    
+    @keyframes flicker {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 0.8; }
+    }
+    
+    /* Mountain silhouette */
+    .mountain-silhouette {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 38%;
+        background: #030610;
+        clip-path: polygon(
+            0% 100%, 
+            0% 55%, 
+            6% 48%, 
+            12% 40%, 
+            18% 45%, 
+            25% 32%, 
+            32% 38%,
+            38% 25%, 
+            45% 32%, 
+            52% 20%, 
+            58% 30%, 
+            65% 28%, 
+            72% 38%, 
+            80% 35%, 
+            88% 45%, 
+            95% 42%, 
+            100% 48%, 
+            100% 100%
+        );
+    }
+    
+    /* Fireworks on LEFT side */
+    .fireworks-burst {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: transparent;
+        border-radius: 50%;
+    }
+    
+    .burst-hero {
+        top: 30%;
+        left: 22%;
+        box-shadow: 
+            0 0 0 3px rgba(255, 184, 77, 0.8),
+            0 0 40px 8px rgba(255, 184, 77, 0.5),
+            0 0 80px 16px rgba(255, 184, 77, 0.3),
+            0 0 120px 24px rgba(255, 184, 77, 0.15);
+        animation: firework-hero 7s infinite;
+    }
+    
+    @keyframes firework-hero {
+        0%, 85%, 100% { opacity: 0; transform: scale(0.3); }
+        3% { opacity: 1; transform: scale(1); }
+        10% { opacity: 0.9; transform: scale(1.8); }
+        22% { opacity: 0.4; transform: scale(2.8); }
+        35% { opacity: 0; transform: scale(3.5); }
+    }
+    
+    .burst-2 {
+        top: 18%;
+        left: 10%;
+        box-shadow: 
+            0 0 0 2px rgba(180, 200, 255, 0.7),
+            0 0 25px 6px rgba(180, 200, 255, 0.4),
+            0 0 50px 12px rgba(180, 200, 255, 0.2);
+        animation: firework-secondary 8s infinite 1.5s;
+    }
+    
+    .burst-3 {
+        top: 40%;
+        left: 38%;
+        box-shadow: 
+            0 0 0 2px rgba(255, 140, 180, 0.7),
+            0 0 30px 6px rgba(255, 140, 180, 0.35),
+            0 0 60px 14px rgba(255, 140, 180, 0.15);
+        animation: firework-secondary 9s infinite 3.5s;
+    }
+    
+    .burst-4 {
+        top: 22%;
+        left: 45%;
+        box-shadow: 
+            0 0 0 2px rgba(140, 255, 200, 0.7),
+            0 0 20px 5px rgba(140, 255, 200, 0.35),
+            0 0 45px 10px rgba(140, 255, 200, 0.15);
+        animation: firework-secondary 10s infinite 5s;
+    }
+    
+    @keyframes firework-secondary {
+        0%, 90%, 100% { opacity: 0; transform: scale(0.5); }
+        5% { opacity: 1; transform: scale(1); }
+        15% { opacity: 0.7; transform: scale(1.5); }
+        25% { opacity: 0; transform: scale(2); }
+    }
+    
+    .trail {
+        position: absolute;
+        width: 2px;
+        background: linear-gradient(to top, 
+            rgba(255, 184, 77, 0.6) 0%,
+            rgba(255, 184, 77, 0.2) 50%,
+            transparent 100%);
+        opacity: 0;
+    }
+    
+    .trail-1 {
+        left: 22%;
+        bottom: 38%;
+        height: 28%;
+        animation: trail-rise 7s infinite;
+    }
+    
+    @keyframes trail-rise {
+        0%, 85%, 100% { opacity: 0; transform: translateY(20px); }
+        1% { opacity: 0.8; transform: translateY(20px); }
+        2% { opacity: 0; transform: translateY(-10px); }
+    }
+    
+    .figure-silhouette {
+        position: absolute;
+        bottom: 44%;
+        left: 52%;
+        width: 10px;
+        height: 20px;
+        background: #030610;
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .figure-silhouette::before {
+        content: '';
+        position: absolute;
+        top: -5px;
+        left: 2.5px;
+        width: 6px;
+        height: 6px;
+        background: #030610;
+        border-radius: 50%;
+    }
+    
+    /* CONTENT — right column, centered vertically, right-aligned */
+    .info-column {
+        position: absolute;
+        right: 7%;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 560px;
+        text-align: right;
+        z-index: 10;
+    }
+    
+    .title-block {
+        margin-bottom: 0;
+    }
+    
+    .title {
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 600;
+        font-size: 76px;
+        color: #F0F0F0;
+        letter-spacing: 0px;
+        line-height: 1;
+        white-space: nowrap;
+        opacity: 0;
+        text-shadow: 
+            0 0 40px rgba(255, 184, 77, 0.25),
+            0 0 80px rgba(255, 184, 77, 0.12);
+        animation: title-fade-in 800ms ease-out forwards;
+    }
+    
+    @keyframes title-fade-in {
+        to { opacity: 1; }
+    }
+    
+    .subtitle {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        color: #B8B8B8;
+        letter-spacing: 1px;
+        margin-top: 6px;
+        font-style: italic;
+        opacity: 0;
+        animation: subtitle-fade-in 400ms ease-out 400ms forwards;
+    }
+    
+    @keyframes subtitle-fade-in {
+        to { opacity: 1; }
+    }
+    
+    .menu {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-end;
+        margin-top: 88px;
+    }
+    
+    .menu-item {
+        font-family: 'Inter', sans-serif;
+        font-size: 15px;
+        font-weight: 500;
+        color: #888888;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 10px 0;
+        min-width: 280px;
+        text-align: right;
+        cursor: pointer;
+        transition: color 200ms ease, padding-right 200ms ease;
+        background: transparent;
+        border: none;
+        position: relative;
+        opacity: 0;
+        transform: translateX(60px);
+        animation: menu-slide-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    
+    .menu-item:nth-child(1) { animation-delay: 800ms; }
+    .menu-item:nth-child(2) { animation-delay: 860ms; }
+    .menu-item:nth-child(3) { animation-delay: 920ms; }
+    .menu-item:nth-child(4) { animation-delay: 980ms; }
+    .menu-item:nth-child(5) { animation-delay: 1040ms; }
+    .menu-item:nth-child(6) { animation-delay: 1100ms; }
+    
+    @keyframes menu-slide-in {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .menu-item.primary {
+        color: #B8B8B8;
+        font-weight: 600;
+    }
+    
+    .menu-item.disabled {
+        color: #444444;
+        cursor: not-allowed;
+    }
+    
+    .menu-item:hover:not(.disabled) {
+        color: #FFB84D;
+        padding-right: 12px;
+    }
+    
+    .menu-item.active {
+        color: #FFB84D;
+        padding-right: 12px;
+    }
+    
+    .bottom-bar {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 40px;
+        z-index: 10;
+        opacity: 0;
+        animation: fade-in 600ms ease-out 1400ms forwards;
+    }
+    
+    @keyframes fade-in {
+        to { opacity: 1; }
+    }
+    
+    .version {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #555555;
+        letter-spacing: 1px;
+    }
+    
+    .studio {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #555555;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    
+    .wireframe-note {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 12px;
+        font-size: 10px;
+        color: #888;
+        border-radius: 3px;
+        z-index: 20;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .replay-button {
+        position: absolute;
+        bottom: 60px;
+        left: 40px;
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #FFB84D;
+        background: rgba(255, 184, 77, 0.1);
+        border: 1px solid rgba(255, 184, 77, 0.3);
+        padding: 6px 12px;
+        border-radius: 3px;
+        cursor: pointer;
+        z-index: 20;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    
+    .replay-button:hover {
+        background: rgba(255, 184, 77, 0.2);
+    }
+</style>
+</head>
+<body>
+    <div class="canvas" id="canvas">
+        <div class="background-layers">
+            <div class="stars" id="stars"></div>
+            
+            <div class="bg-note">[ zone 6 mountain vista<br>will replace this placeholder ]</div>
+            
+            <div class="city-lights"></div>
+            <div class="city-dot" style="bottom: 36%; left: 8%;"></div>
+            <div class="city-dot" style="bottom: 37%; left: 14%; animation-delay: 0.5s;"></div>
+            <div class="city-dot" style="bottom: 36%; left: 20%; animation-delay: 1s;"></div>
+            <div class="city-dot" style="bottom: 37%; left: 26%; animation-delay: 1.5s;"></div>
+            <div class="city-dot" style="bottom: 36%; left: 33%; animation-delay: 0.2s;"></div>
+            <div class="city-dot" style="bottom: 37%; left: 40%; animation-delay: 0.8s;"></div>
+            <div class="city-dot" style="bottom: 36%; left: 48%; animation-delay: 1.2s;"></div>
+            
+            <div class="mountain-silhouette"></div>
+            <div class="figure-silhouette"></div>
+            
+            <div class="trail trail-1"></div>
+            
+            <div class="fireworks-burst burst-hero"></div>
+            <div class="fireworks-burst burst-2"></div>
+            <div class="fireworks-burst burst-3"></div>
+            <div class="fireworks-burst burst-4"></div>
+        </div>
+        
+        <div class="wireframe-note">Zone 6 bg · Animated · Right-aligned</div>
+        
+        <div class="info-column">
+            <div class="title-block">
+                <div class="title">The Last Show</div>
+                <div class="subtitle">a game about fireworks</div>
+            </div>
+            
+            <div class="menu">
+                <div class="menu-item primary active">New Game</div>
+                <div class="menu-item disabled">Continue</div>
+                <div class="menu-item">Unlockables</div>
+                <div class="menu-item">Settings</div>
+                <div class="menu-item">Credits</div>
+                <div class="menu-item">Quit</div>
+            </div>
+        </div>
+        
+        <div class="bottom-bar">
+            <div class="studio">Missing Page Studios</div>
+            <div class="version">v0.1.0</div>
+        </div>
+        
+        <button class="replay-button" onclick="replayAnimation()">↻ Replay Animation</button>
+    </div>
+    
+    <script>
+        const starsContainer = document.getElementById('stars');
+        const numStars = 100;
+        
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 0.5;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 55 + '%';
+            star.style.animationDelay = Math.random() * 4 + 's';
+            starsContainer.appendChild(star);
+        }
+        
+        function replayAnimation() {
+            const canvas = document.getElementById('canvas');
+            const animatedEls = canvas.querySelectorAll('.title, .subtitle, .menu-item, .bottom-bar');
+            animatedEls.forEach(el => {
+                el.style.animation = 'none';
+                el.offsetHeight; // force reflow
+                el.style.animation = '';
+            });
+        }
+    </script>
+</body>
+</html>
