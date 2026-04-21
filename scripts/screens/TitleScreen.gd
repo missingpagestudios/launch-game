@@ -13,11 +13,12 @@ const FONT_BOLD := preload("res://assets/fonts/Inter-Bold.ttf")
 const FireworkFieldScript := preload("res://scripts/fireworks/firework_field.gd")
 
 # Ambient burst cadence + spatial gating (LEFT-side only).
-const AMBIENT_INTERVAL_MIN := 7.0
-const AMBIENT_INTERVAL_MAX := 10.0
+const AMBIENT_INTERVAL_MIN := 1.0
+const AMBIENT_INTERVAL_MAX := 5.0
 const AMBIENT_LEFT_X_MIN := 120.0
 const AMBIENT_LEFT_X_MAX := 560.0       # Keep bursts clear of the right column.
 const AMBIENT_GROUND_Y_OFFSET := 260.0  # Launch point ~260px above bottom edge.
+const AMBIENT_CATALOG_LIMIT := 40       # First 40 catalog entries only.
 
 # Spec hero image — fallback chain if it isn't in the repo yet.
 const BG_CANDIDATES: Array[String] = [
@@ -99,9 +100,10 @@ func _build_ambient() -> void:
 
 func _build_firework_field() -> void:
 	_ambient_catalog = []
-	for entry in FireworkBursts.catalog():
-		if String(entry.get("category", "")) == "Real — Backyard":
-			_ambient_catalog.append(entry)
+	var full: Array = FireworkBursts.catalog()
+	var limit: int = mini(AMBIENT_CATALOG_LIMIT, full.size())
+	for i in range(limit):
+		_ambient_catalog.append(full[i])
 	if _ambient_catalog.is_empty():
 		return
 
@@ -177,16 +179,23 @@ func _build_title() -> Label:
 	var l := Label.new()
 	l.text = "The Last Show"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	# Variable font at wght 700 — proper bold weight on Cormorant.
+	# Bolder Cormorant: max axis weight (700) plus an embolden bump to
+	# synthesize a heavier stroke since the variable font's wght tops
+	# out at 700. Combined result reads as proper display-weight serif.
 	var fv := FontVariation.new()
 	fv.base_font = FONT_TITLE_VARIABLE
 	fv.variation_opentype = {"wght": 700}
+	fv.variation_embolden = 0.4
 	l.add_theme_font_override("font", fv)
-	l.add_theme_font_size_override("font_size", 76)
+	l.add_theme_font_size_override("font_size", 92)
 	l.add_theme_color_override("font_color", TEXT_PRIMARY)
-	l.add_theme_constant_override("outline_size", 36)
-	l.add_theme_color_override(
-		"font_outline_color", Color(1.0, 0.722, 0.302, 0.14))
+	# Soft amber bloom via Label's shadow slot: offset = 0, outline_size
+	# = 24 expands the shadow into a blur instead of the hard stroke
+	# `font_outline_color` was rendering.
+	l.add_theme_color_override("font_shadow_color", Color(1.0, 0.722, 0.302, 0.55))
+	l.add_theme_constant_override("shadow_offset_x", 0)
+	l.add_theme_constant_override("shadow_offset_y", 0)
+	l.add_theme_constant_override("shadow_outline_size", 24)
 	return l
 
 
@@ -195,7 +204,7 @@ func _build_subtitle() -> Label:
 	l.text = "a game about fireworks"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	l.add_theme_font_override("font", FONT_BOLD)
-	l.add_theme_font_size_override("font_size", 14)
+	l.add_theme_font_size_override("font_size", 18)
 	l.add_theme_color_override("font_color", TEXT_SECONDARY)
 	return l
 
@@ -205,19 +214,19 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	b.text = text.to_upper()
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	b.custom_minimum_size = Vector2(280, 0)
+	b.custom_minimum_size = Vector2(0, 0)
 	b.focus_mode = Control.FOCUS_ALL
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.size_flags_horizontal = Control.SIZE_SHRINK_END
+	# Fill the full column width so the button's right edge (where its
+	# right-aligned text lands) coincides with the title + subtitle
+	# right edge, guaranteeing vertical alignment.
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.add_theme_font_override("font", FONT_SEMIBOLD if primary else FONT_MEDIUM)
-	b.add_theme_font_size_override("font_size", 15)
+	b.add_theme_font_size_override("font_size", 18)
 
 	var disabled: bool = (text.to_upper() == "CONTINUE" and not _continue_available())
-	var base_color: Color = TEXT_MUTED
-	if disabled:
-		base_color = TEXT_DIM
-	elif primary:
-		base_color = TEXT_SECONDARY
+	# No primary tint — hover/focus amber is the only state cue.
+	var base_color: Color = TEXT_DIM if disabled else TEXT_MUTED
 	b.add_theme_color_override("font_color", base_color)
 	b.add_theme_color_override("font_hover_color", ACCENT_AMBER)
 	b.add_theme_color_override("font_focus_color", ACCENT_AMBER)
@@ -226,20 +235,15 @@ func _build_menu_button(text: String, primary: bool, idx: int) -> Button:
 	var empty := StyleBoxEmpty.new()
 	empty.content_margin_left = 0
 	empty.content_margin_right = 0
-	empty.content_margin_top = 10
-	empty.content_margin_bottom = 10
+	empty.content_margin_top = 8
+	empty.content_margin_bottom = 8
 	b.add_theme_stylebox_override("normal", empty)
 	b.add_theme_stylebox_override("hover", empty)
 	b.add_theme_stylebox_override("pressed", empty)
 	b.add_theme_stylebox_override("focus", empty)
 	b.add_theme_stylebox_override("disabled", empty)
+	b.add_theme_stylebox_override("hover_pressed", empty)
 	b.disabled = disabled
-
-	# Hover slide-right via pivot_offset + tween on `position.x`.
-	b.mouse_entered.connect(func() -> void: _menu_hover(b, true))
-	b.mouse_exited.connect(func() -> void: _menu_hover(b, false))
-	b.focus_entered.connect(func() -> void: _menu_hover(b, true))
-	b.focus_exited.connect(func() -> void: _menu_hover(b, false))
 
 	b.pressed.connect(func() -> void: _on_menu_select(idx))
 	return b
@@ -260,7 +264,7 @@ func _build_bottom_bar() -> void:
 	var left := Label.new()
 	left.text = "MISSING PAGE STUDIOS"
 	left.add_theme_font_override("font", FONT_REGULAR)
-	left.add_theme_font_size_override("font_size", 11)
+	left.add_theme_font_size_override("font_size", 12)
 	left.add_theme_color_override("font_color", TEXT_DIM)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(left)
@@ -268,7 +272,7 @@ func _build_bottom_bar() -> void:
 	var right := Label.new()
 	right.text = "v0.1.0"
 	right.add_theme_font_override("font", FONT_REGULAR)
-	right.add_theme_font_size_override("font_size", 11)
+	right.add_theme_font_size_override("font_size", 12)
 	right.add_theme_color_override("font_color", TEXT_DIM)
 	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	bar.add_child(right)
@@ -293,14 +297,11 @@ func _primary_menu_index() -> int:
 	return 1 if _continue_available() else 0  # Continue > New Game
 
 
-func _menu_hover(b: Button, on: bool) -> void:
-	if b.disabled:
-		return
-	var target: float = 12.0 if on else 0.0
-	var t := create_tween()
-	t.set_ease(Tween.EASE_OUT)
-	t.set_trans(Tween.TRANS_CUBIC)
-	t.tween_property(b, "position:x", target + b.get_meta("_rest_x", 0.0), 0.18)
+func _menu_hover(_b: Button, _on: bool) -> void:
+	# Slide animation removed — the position shift was pushing buttons
+	# past the column edge and misaligning them with the title. Color
+	# change (amber) is the only hover cue now.
+	pass
 
 
 # --- entrance animation -----------------------------------------------------
