@@ -207,9 +207,11 @@ func _logo_label() -> Label:
 
 
 func _night_info_block() -> Control:
-	# NIGHT and the value share identical Inter 18 SemiBold so they
-	# share a baseline and visually centre with the VT323 logo rather
-	# than looking taller on the "1" side.
+	# NIGHT + value share identical Inter 18 SemiBold. Wrapped in a
+	# MarginContainer with 1px top pad so the row visually aligns with
+	# the VT323 logo's baseline (Inter sits slightly higher otherwise).
+	var shift := MarginContainer.new()
+	shift.add_theme_constant_override("margin_top", 1)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -217,7 +219,8 @@ func _night_info_block() -> Control:
 	var value := _inter_label(str(GameState.night), SIZE_H1, FONT_SEMIBOLD, TEXT_PRIMARY)
 	h.add_child(label)
 	h.add_child(value)
-	return h
+	shift.add_child(h)
+	return shift
 
 
 func _zone_pill() -> Control:
