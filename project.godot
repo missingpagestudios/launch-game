@@ -26,17 +26,16 @@ NewspaperContent="*res://scripts/autoload/NewspaperContent.gd"
 DebugAutoRun="*res://scripts/autoload/DebugAutoRun.gd"
 Router="*res://scripts/autoload/Router.gd"
 
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
 [gui]
 
 theme/custom="res://themes/default.tres"
-
-[display]
-
-window/size/viewport_width=1920
-window/size/viewport_height=1080
-window/size/window_width_override=1280
-window/size/window_height_override=720
-window/stretch/mode="viewport"
 
 [input]
 
