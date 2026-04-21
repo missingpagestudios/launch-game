@@ -224,8 +224,11 @@ func _night_info_block() -> Control:
 
 
 func _zone_pill() -> Control:
+	# Pill shifts down 1px overall. "ZONE" label gets an extra +1 inner
+	# so it lands 2px total below the logo baseline; "Backyard" sits at
+	# +1 (appears 1px higher than ZONE per Rob's tune).
 	var shift := MarginContainer.new()
-	shift.add_theme_constant_override("margin_top", 2)
+	shift.add_theme_constant_override("margin_top", 1)
 
 	var wrap := PanelContainer.new()
 	var style := _rounded_style(ACCENT_AMBER_DIM, BORDER_AMBER, 4)
@@ -240,20 +243,28 @@ func _zone_pill() -> Control:
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	wrap.add_child(h)
 
-	var zone_label := _inter_label(
-		"ZONE %d" % GameState.current_zone, SIZE_LABEL, FONT_SEMIBOLD, ACCENT_AMBER)
-	h.add_child(zone_label)
+	var zone_shift := MarginContainer.new()
+	zone_shift.add_theme_constant_override("margin_top", 1)
+	zone_shift.add_child(_inter_label(
+		"ZONE %d" % GameState.current_zone, SIZE_LABEL, FONT_SEMIBOLD, ACCENT_AMBER))
+	h.add_child(zone_shift)
+
 	var zone_name := String(BalanceConfig.get_zone(GameState.current_zone).get("name", ""))
-	var name_label := _inter_label(zone_name, SIZE_ITEM, FONT_MEDIUM, TEXT_PRIMARY)
-	h.add_child(name_label)
+	h.add_child(_inter_label(zone_name, SIZE_ITEM, FONT_MEDIUM, TEXT_PRIMARY))
+
 	shift.add_child(wrap)
 	return shift
 
 
 func _fans_block() -> Control:
+	# Fans row sits 1px below logo baseline so the icon + count + bar
+	# align visually with Cash to their right.
+	var shift := MarginContainer.new()
+	shift.add_theme_constant_override("margin_top", 1)
 	var h := HBoxContainer.new()
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	h.add_theme_constant_override("separation", 8)
+	shift.add_child(h)
 	h.add_child(_icon(ICON_FANS, 18))
 
 	var next_zone: Dictionary = BalanceConfig.get_zone(GameState.current_zone + 1)
@@ -284,7 +295,7 @@ func _fans_block() -> Control:
 	track.add_child(_fans_fill)
 	track_center.add_child(track)
 	h.add_child(track_center)
-	return h
+	return shift
 
 
 func _cash_block() -> Control:
@@ -413,10 +424,14 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	h.add_child(name_lbl)
 
-	# Row keeps just the amber cost — detailed stats moved to the info
-	# modal (Phase 3). Fewer glyphs per row = easier scan.
+	# Engagement sits after the name, then the amber cost lands right
+	# before the stepper so firework + marketing rows share the same
+	# "name · meta · $cost · stepper" layout.
 	h.add_child(_inter_label(
-		"$%s" % _fmt_num(cost), SIZE_BODY_SM, FONT_MEDIUM, ACCENT_AMBER))
+		"%d eng" % int(fw.get("engagement", 0)),
+		SIZE_META, FONT_REGULAR, TEXT_MUTED))
+	h.add_child(_inter_label(
+		"$%s" % _fmt_num(cost), SIZE_META, FONT_SEMIBOLD, ACCENT_AMBER))
 
 	var stepper := HBoxContainer.new()
 	stepper.add_theme_constant_override("separation", 2)
@@ -501,11 +516,11 @@ func _build_marketing_row(mk: Dictionary) -> Control:
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	h.add_child(name_lbl)
 
-	h.add_child(_inter_label("$%s" % _fmt_num(cost), SIZE_META, FONT_MEDIUM, ACCENT_AMBER))
-	h.add_child(_inter_label("·", SIZE_META, FONT_REGULAR, TEXT_DIM))
 	h.add_child(_inter_label(
-		"+%s att" % _fmt_num(int(mk.get("attendees", 0))),
+		"+%s attendance" % _fmt_num(int(mk.get("attendees", 0))),
 		SIZE_META, FONT_REGULAR, TEXT_MUTED))
+	h.add_child(_inter_label(
+		"$%s" % _fmt_num(cost), SIZE_META, FONT_SEMIBOLD, ACCENT_AMBER))
 
 	var minus := _qty_button("-")
 	var qty_lbl := _inter_label("0", SIZE_ITEM, FONT_MEDIUM, TEXT_PRIMARY)
