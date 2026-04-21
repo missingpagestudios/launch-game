@@ -50,7 +50,7 @@ const SIZE_BODY := 22
 const SIZE_SMALL := 20
 const SIZE_STATS := 18
 const SIZE_CAPTION := 16
-const ROW_HEIGHT := 64
+const ROW_HEIGHT := 56
 
 # --- icon paths --------------------------------------------------------------
 
@@ -65,6 +65,7 @@ const ICON_FANS := "res://assets/images/fans.png"
 const ICON_LOCK := "res://assets/images/lock.png"
 const ICON_CHECK := "res://assets/images/check.png"
 const ICON_ARROW := "res://assets/images/rightarrow.png"
+const ICON_INFO := "res://assets/images/info.png"
 const CATEGORY_ICONS := {
 	"marketing": "res://assets/images/speaker.png",
 	"infrastructure": "res://assets/images/house.png",
@@ -268,10 +269,10 @@ func _row_shell(stripe_color: Color, bg: Color) -> Dictionary:
 
 	var pad := MarginContainer.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	pad.add_theme_constant_override("margin_left", 8)
-	pad.add_theme_constant_override("margin_right", 8)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 12)
+	pad.add_theme_constant_override("margin_bottom", 12)
 	outer.add_child(pad)
 
 	var content := HBoxContainer.new()
@@ -933,10 +934,8 @@ func _icon(path: String, px: int) -> TextureRect:
 
 func _info_button() -> Button:
 	var b := Button.new()
-	b.text = "i"
-	b.add_theme_font_size_override("font_size", SIZE_STATS)
-	b.add_theme_color_override("font_color", MUTED)
-	b.add_theme_color_override("font_hover_color", GOLD)
+	b.icon = load(ICON_INFO)
+	b.expand_icon = true
 	b.add_theme_stylebox_override("normal", _button_style(
 		Color(0.039, 0.063, 0.157, 0.5), Color(DIM.r, DIM.g, DIM.b, 0.9)))
 	b.add_theme_stylebox_override("hover", _button_style(
