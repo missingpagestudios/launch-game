@@ -207,10 +207,13 @@ func _logo_label() -> Label:
 
 
 func _night_info_block() -> Control:
+	# NIGHT and the value share identical Inter 18 SemiBold so they
+	# share a baseline and visually centre with the VT323 logo rather
+	# than looking taller on the "1" side.
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
-	var label := _inter_label("NIGHT", SIZE_LABEL, FONT_SEMIBOLD, TEXT_MUTED)
+	var label := _inter_label("NIGHT", SIZE_H1, FONT_SEMIBOLD, TEXT_MUTED)
 	var value := _inter_label(str(GameState.night), SIZE_H1, FONT_SEMIBOLD, TEXT_PRIMARY)
 	h.add_child(label)
 	h.add_child(value)
@@ -313,9 +316,13 @@ func _panel(title: String, body: Control, width: int) -> Control:
 	wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	wrap.add_theme_stylebox_override("panel", _rounded_style(PANEL_BG, BORDER_SUBTLE, 6))
 
+	# Outer panel padding: right side is thinner so the list body (and
+	# therefore the scrollbar) can sit close to the panel edge. Title
+	# + body get their own inner right margin so row cards still
+	# breathe away from the scrollbar.
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 20)
-	pad.add_theme_constant_override("margin_right", 20)
+	pad.add_theme_constant_override("margin_right", 6)
 	pad.add_theme_constant_override("margin_top", 20)
 	pad.add_theme_constant_override("margin_bottom", 20)
 	wrap.add_child(pad)
@@ -324,9 +331,11 @@ func _panel(title: String, body: Control, width: int) -> Control:
 	v.add_theme_constant_override("separation", 14)
 	pad.add_child(v)
 
-	# Panel title is the most visually prominent element in the panel.
-	var header := _inter_label(title, SIZE_PANEL_TITLE, FONT_BOLD, TEXT_PRIMARY)
-	v.add_child(header)
+	# Title keeps a matching 14px right margin so it doesn't hug the edge.
+	var title_pad := MarginContainer.new()
+	title_pad.add_theme_constant_override("margin_right", 14)
+	title_pad.add_child(_inter_label(title, SIZE_PANEL_TITLE, FONT_BOLD, TEXT_PRIMARY))
+	v.add_child(title_pad)
 
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -402,14 +411,17 @@ func _build_firework_row(fw: Dictionary) -> Control:
 	h.add_child(_inter_label(
 		"$%s" % _fmt_num(cost), SIZE_BODY_SM, FONT_MEDIUM, ACCENT_AMBER))
 
+	var stepper := HBoxContainer.new()
+	stepper.add_theme_constant_override("separation", 2)
 	var minus := _qty_button("-")
 	var qty_lbl := _inter_label("0", SIZE_ITEM, FONT_MEDIUM, TEXT_PRIMARY)
 	qty_lbl.custom_minimum_size = Vector2(28, 0)
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _qty_button("+")
-	h.add_child(minus)
-	h.add_child(qty_lbl)
-	h.add_child(plus)
+	stepper.add_child(minus)
+	stepper.add_child(qty_lbl)
+	stepper.add_child(plus)
+	h.add_child(stepper)
 
 	var info_btn := _info_button()
 	info_btn.pressed.connect(func() -> void: _show_firework_info(fw))
@@ -597,17 +609,20 @@ func _enhancement_pill_style(b: Button, selected: bool) -> void:
 # --- upgrades panel ---------------------------------------------------------
 
 func _build_upgrades_panel_body() -> Control:
-	# Tabs removed — three vertical sections (Owned / Available / Locked)
-	# scroll naturally.
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var inner := MarginContainer.new()
+	inner.add_theme_constant_override("margin_right", 10)
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	scroll.add_child(inner)
 	_upgrade_body = VBoxContainer.new()
 	_upgrade_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_upgrade_body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_upgrade_body.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_upgrade_body.add_theme_constant_override("separation", 6)
-	scroll.add_child(_upgrade_body)
+	inner.add_child(_upgrade_body)
 	_rebuild_upgrades()
 	return scroll
 
@@ -873,17 +888,17 @@ func _build_bottom_bar() -> Control:
 	left.add_child(_warning_label)
 	h.add_child(left)
 
-	# Gap between summary and right-side controls.
+	# Right cluster: Run Show first, hamburger on the far right.
 	var right := HBoxContainer.new()
 	right.alignment = BoxContainer.ALIGNMENT_END
 	right.add_theme_constant_override("separation", 12)
 	h.add_child(right)
 
-	right.add_child(_menu_button())
-
 	_run_show_button = _run_show_primary()
 	_run_show_button.pressed.connect(_on_run_show_pressed)
 	right.add_child(_run_show_button)
+
+	right.add_child(_menu_button())
 	return bar
 
 
@@ -1201,16 +1216,28 @@ func _qty_button(kind: String) -> Button:
 	b.add_theme_color_override("icon_hover_color", ACCENT_AMBER)
 	b.add_theme_color_override("icon_pressed_color", ACCENT_AMBER)
 	b.add_theme_color_override("icon_disabled_color", TEXT_DIM)
-	b.add_theme_stylebox_override("normal", _rounded_style(
-		Color(1.0, 1.0, 1.0, 0.06), Color(1.0, 1.0, 1.0, 0.1), 3))
-	b.add_theme_stylebox_override("hover", _rounded_style(
-		ACCENT_AMBER_DIM, BORDER_AMBER, 3))
-	b.add_theme_stylebox_override("pressed", _rounded_style(
-		ACCENT_AMBER_DIM, BORDER_AMBER, 3))
-	b.add_theme_stylebox_override("disabled", _rounded_style(
-		Color(1.0, 1.0, 1.0, 0.03), BORDER_SUBTLE, 3))
+	# Tight stylebox margins so the glyph fills ~80% of the 24×24 box.
+	b.add_theme_stylebox_override("normal", _icon_button_style(
+		Color(1.0, 1.0, 1.0, 0.06), Color(1.0, 1.0, 1.0, 0.1)))
+	b.add_theme_stylebox_override("hover", _icon_button_style(
+		ACCENT_AMBER_DIM, BORDER_AMBER))
+	b.add_theme_stylebox_override("pressed", _icon_button_style(
+		ACCENT_AMBER_DIM, BORDER_AMBER))
+	b.add_theme_stylebox_override("disabled", _icon_button_style(
+		Color(1.0, 1.0, 1.0, 0.03), BORDER_SUBTLE))
 	b.custom_minimum_size = Vector2(24, 24)
 	return b
+
+
+func _icon_button_style(fill: Color, border: Color) -> StyleBoxFlat:
+	# Compact pad so the icon fills the button: 2px margin on every side
+	# gives ~20×20 of icon inside a 24×24 button (~83%).
+	var sb := _rounded_style(fill, border, 3)
+	sb.content_margin_left = 2
+	sb.content_margin_right = 2
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 2
+	return sb
 
 
 func _info_button() -> Button:
@@ -1219,12 +1246,12 @@ func _info_button() -> Button:
 	b.expand_icon = true
 	b.add_theme_color_override("icon_normal_color", TEXT_DIM)
 	b.add_theme_color_override("icon_hover_color", ACCENT_AMBER)
-	b.add_theme_stylebox_override("normal", _rounded_style(
-		Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.1), 12))
-	b.add_theme_stylebox_override("hover", _rounded_style(
-		ACCENT_AMBER_DIM, BORDER_AMBER, 12))
-	b.add_theme_stylebox_override("pressed", _rounded_style(
-		ACCENT_AMBER_DIM, BORDER_AMBER, 12))
+	b.add_theme_stylebox_override("normal", _icon_button_style(
+		Color(0, 0, 0, 0), Color(1.0, 1.0, 1.0, 0.1)))
+	b.add_theme_stylebox_override("hover", _icon_button_style(
+		ACCENT_AMBER_DIM, BORDER_AMBER))
+	b.add_theme_stylebox_override("pressed", _icon_button_style(
+		ACCENT_AMBER_DIM, BORDER_AMBER))
 	b.custom_minimum_size = Vector2(24, 24)
 	b.tooltip_text = "Details"
 	return b
@@ -1289,25 +1316,23 @@ func _run_show_primary() -> Button:
 	b.add_theme_stylebox_override("disabled", _button_style_padded(
 		Color(1.0, 0.722, 0.302, 0.10),
 		Color(1.0, 0.722, 0.302, 0.30),
-		6, 0, 32))
-	b.custom_minimum_size = Vector2(180, 48)
+		6, 0, 28))
+	b.custom_minimum_size = Vector2(160, 40)
 	return b
 
 
 func _menu_button() -> Button:
-	# Borderless until hover, neutral icon, no amber — lets Run Show
-	# own the amber hierarchy in the bottom bar.
 	var b := Button.new()
 	b.icon = load(ICON_MENU)
 	b.expand_icon = true
 	b.add_theme_color_override("icon_normal_color", TEXT_MUTED)
 	b.add_theme_color_override("icon_hover_color", TEXT_PRIMARY)
-	b.add_theme_stylebox_override("normal", _rounded_style(
-		Color(0, 0, 0, 0), Color(0, 0, 0, 0), 6))
-	b.add_theme_stylebox_override("hover", _rounded_style(
-		Color(1.0, 1.0, 1.0, 0.05), Color(0, 0, 0, 0), 6))
-	b.add_theme_stylebox_override("pressed", _rounded_style(
-		Color(1.0, 1.0, 1.0, 0.08), Color(0, 0, 0, 0), 6))
+	b.add_theme_stylebox_override("normal", _icon_button_style(
+		Color(0, 0, 0, 0), Color(0, 0, 0, 0)))
+	b.add_theme_stylebox_override("hover", _icon_button_style(
+		Color(1.0, 1.0, 1.0, 0.05), Color(0, 0, 0, 0)))
+	b.add_theme_stylebox_override("pressed", _icon_button_style(
+		Color(1.0, 1.0, 1.0, 0.08), Color(0, 0, 0, 0)))
 	b.custom_minimum_size = Vector2(40, 40)
 	return b
 
